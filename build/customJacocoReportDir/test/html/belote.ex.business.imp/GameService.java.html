@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GameService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Belote</a> &gt; <a href="index.source.html" class="el_package">belote.ex.business.imp</a> &gt; <span class="el_source">GameService.java</span></div><h1>GameService.java</h1><pre class="source lang-java linenums">package belote.ex.business.imp;
+
+import belote.ex.business.GameServiceInt;
+import belote.ex.business.exceptions.NotAvaibleException;
+import belote.ex.persistance.GameRepositoryInt;
+import belote.ex.persistance.GameScoresRepository;
+import belote.ex.persistance.entity.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.AllArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Service;
+
+import java.text.MessageFormat;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+
+<span class="fc" id="L21">@Service</span>
+@AllArgsConstructor
+public class GameService implements GameServiceInt {
+    private GameRepositoryInt repository;
+    private GameScoresRepository scoresRepository;
+    private final SimpMessagingTemplate messagingTemplate;
+
+
+    public void startRound(int gameID){
+<span class="fc" id="L30">        AtomicInteger cardNumber = new AtomicInteger(0);</span>
+
+<span class="fc" id="L32">        GameEntity game =repository.getGame(gameID);</span>
+<span class="fc" id="L33">        this.shuffleDeck(gameID);</span>
+
+<span class="fc" id="L35">        this.dealCards(gameID,cardNumber,3);</span>
+<span class="fc" id="L36">        this.dealCards(gameID,cardNumber,2);</span>
+<span class="fc" id="L37">        this.dealCards(gameID,cardNumber,3);</span>
+
+<span class="fc" id="L39">        game.setDeck(new CardEntity[32]);</span>
+<span class="fc" id="L40">        this.askPlayerForACard(game.getOrder().getFirst(),gameID);</span>
+
+<span class="fc" id="L42">    }</span>
+
+    public void shuffleDeck(int gameID) {
+<span class="fc" id="L45">        GameEntity game =repository.getGame(gameID);</span>
+<span class="fc" id="L46">        CardEntity[] deckOfCards =  game.getDeck();</span>
+<span class="fc" id="L47">        Random rand = new Random();</span>
+        int j;
+<span class="fc bfc" id="L49" title="All 2 branches covered.">        for (int i = 0; i &lt; 32; i++) {</span>
+<span class="fc" id="L50">            j = rand.nextInt(32);</span>
+<span class="fc" id="L51">            CardEntity temp = deckOfCards[i];</span>
+<span class="fc" id="L52">            deckOfCards[i] = deckOfCards[j];</span>
+<span class="fc" id="L53">            deckOfCards[j] = temp;</span>
+        }
+<span class="fc" id="L55">    }</span>
+
+    @Override
+    public GameEntity getGame(int id){
+<span class="fc" id="L59">        return repository.getGame(id);</span>
+    }
+
+    @Override
+    public List&lt;CardEntity&gt; getDeck(int id) {
+<span class="fc" id="L64">        GameEntity game = getGame(id);</span>
+<span class="fc" id="L65">        CardEntity[] deckOfCards =  game.getDeck();</span>
+<span class="fc" id="L66">        return Arrays.stream(deckOfCards).toList();</span>
+    }
+
+
+    @Override
+    public int createGame(LobbyEntity lobbyEntity) {
+<span class="nc" id="L72">       return repository.createGame(lobbyEntity);</span>
+    }
+
+    public void setFirstPlayer2(int times, int gameID)
+    {
+<span class="fc" id="L77">        GameEntity game =repository.getGame(gameID);</span>
+<span class="fc bfc" id="L78" title="All 2 branches covered.">        for(int x =0; x &lt; times; x++) {</span>
+<span class="fc" id="L79">            game.getOrder().addLast(game.getOrder().getFirst());</span>
+<span class="fc" id="L80">            game.getOrder().removeFirst();</span>
+        }
+<span class="fc" id="L82">    }</span>
+
+    public void nextPlayer(int gameID) {
+<span class="fc" id="L85">        GameEntity game =repository.getGame(gameID);</span>
+<span class="fc" id="L86">        game.getOrder().addLast(game.getOrder().getFirst());</span>
+<span class="fc" id="L87">        game.getOrder().removeFirst();</span>
+<span class="fc" id="L88">    }</span>
+
+
+
+    public void dealCards(int gameID, AtomicInteger cardInDeckId, int numberOfCards) {
+
+<span class="fc" id="L94">        GameEntity game =repository.getGame(gameID);</span>
+<span class="fc" id="L95">        CardEntity[] deck = game.getDeck();</span>
+
+<span class="fc bfc" id="L97" title="All 2 branches covered.">        for (int i=0; i &lt; 4; i++) {</span>
+<span class="fc" id="L98">            ArrayList&lt;CardEntity&gt; hand = game.getHands().get(game.getOrder().getFirst());</span>
+<span class="fc" id="L99">            nextPlayer(gameID);</span>
+<span class="fc bfc" id="L100" title="All 2 branches covered.">            for (int s=0; s &lt; numberOfCards; s++) {</span>
+<span class="fc" id="L101">                hand.add(deck[cardInDeckId.get()]);</span>
+<span class="fc" id="L102">                cardInDeckId.incrementAndGet();</span>
+            }
+        }
+
+<span class="fc" id="L106">    }</span>
+
+
+    public List&lt;CardEntity&gt; playableCards(List&lt;CardEntity&gt; hand,CardEntity cardToAnswer){
+        ArrayList&lt;CardEntity&gt; playableCards;
+<span class="fc bfc" id="L111" title="All 2 branches covered.">        if (cardToAnswer != null) {</span>
+<span class="fc" id="L112">            playableCards = hand.stream()</span>
+<span class="fc bfc" id="L113" title="All 4 branches covered.">                    .filter(x -&gt; x.getSuit().equals(cardToAnswer.getSuit()) &amp;&amp; x.getPoints() &gt; cardToAnswer.getPoints()).collect(Collectors.toCollection(ArrayList::new));</span>
+
+<span class="fc bfc" id="L115" title="All 2 branches covered.">            if (playableCards.isEmpty()) {</span>
+
+<span class="fc" id="L117">                playableCards.addAll(hand.stream()</span>
+<span class="fc" id="L118">                        .filter(card -&gt; card.getSuit().equals(cardToAnswer.getSuit()))</span>
+<span class="fc" id="L119">                        .toList());</span>
+            }
+
+<span class="fc bfc" id="L122" title="All 2 branches covered.">            return playableCards.isEmpty() ? hand : playableCards;</span>
+        } else {
+<span class="fc" id="L124">            return hand;</span>
+        }
+
+    }
+
+    public void playCard(int playerID, int playedCard,int gameID,int seconds){
+<span class="fc" id="L130">        GameEntity game =repository.getGame(gameID);</span>
+
+
+<span class="fc" id="L133">            ArrayList&lt;CardEntity&gt; hand = game.getHands().get(game.getOrder().getFirst());</span>
+<span class="fc bfc" id="L134" title="All 2 branches covered.">            CardEntity card = hand.stream().filter(x -&gt; playedCard == x.getId()).findFirst().orElse(null);</span>
+
+
+<span class="fc" id="L137">            List&lt;CardEntity&gt; cards = playableCards(game.getHands().get(game.getOrder().getFirst()),game.getCardToAnswer());</span>
+<span class="pc bpc" id="L138" title="1 of 2 branches missed.">            if(!cards.contains(card))</span>
+            {
+<span class="nc" id="L140">                throw new NotAvaibleException(&quot;Not avaible&quot;);</span>
+            }
+<span class="fc" id="L142">            CardEntity card1ToAnswer = game.getCardToAnswer();</span>
+<span class="fc" id="L143">            game.getHands().get(game.getOrder().getFirst()).remove(card);</span>
+<span class="fc bfc" id="L144" title="All 2 branches covered.">            if (game.getCardToAnswer() == null) {</span>
+<span class="fc" id="L145">                game.setCardToAnswer(card);</span>
+            } else {
+<span class="pc bpc" id="L147" title="1 of 2 branches missed.">                assert card != null;</span>
+<span class="pc bpc" id="L148" title="3 of 4 branches missed.">                if (card1ToAnswer.getSuit().equals(card.getSuit()) &amp;&amp; card1ToAnswer.getPoints() &lt; card.getPoints()) {</span>
+<span class="nc" id="L149">                    game.setCardToAnswer(card);</span>
+                }
+            }
+
+            ArrayList&lt;CardEntity&gt; bucket;
+<span class="fc" id="L154">            bucket = game.getBucket();</span>
+<span class="fc" id="L155">            bucket.add(card);</span>
+
+<span class="fc" id="L157">            String to = &quot;/game/&quot; + gameID;</span>
+<span class="fc" id="L158">            messagingTemplate.convertAndSend(to, game);</span>
+
+            try {
+<span class="fc" id="L161">                Thread.sleep(seconds);</span>
+<span class="nc" id="L162">            } catch (InterruptedException e) {</span>
+<span class="nc" id="L163">                Thread.currentThread().interrupt();</span>
+<span class="fc" id="L164">            }</span>
+<span class="fc" id="L165">            nextPlayer(gameID);</span>
+
+<span class="fc bfc" id="L167" title="All 2 branches covered.">            if (bucket.indexOf(card) == 3) {</span>
+<span class="fc" id="L168">                this.endBucket(gameID);</span>
+            } else {
+<span class="fc" id="L170">                askPlayerForACard(game.getOrder().getFirst(), gameID);</span>
+            }
+<span class="fc" id="L172">    }</span>
+    public void endRound(int gameID){
+<span class="fc" id="L174">        GameEntity game =repository.getGame(gameID);</span>
+
+<span class="fc" id="L176">        this.calculateScores(gameID);</span>
+
+<span class="pc bpc" id="L178" title="2 of 4 branches missed.">        if (game.getScores().get(1) &gt; 9 || game.getScores().get(0) &gt;9){</span>
+<span class="nc" id="L179">            endGame(gameID);</span>
+        }
+        else {
+
+
+
+
+<span class="fc" id="L186">        List&lt;CardEntity&gt; team1Cards = game.getThisRoundCards().get(1).stream().toList();</span>
+<span class="fc" id="L187">        List&lt;CardEntity&gt; team2Cards = game.getThisRoundCards().get(0).stream().toList();</span>
+
+
+<span class="fc" id="L190">        List&lt;CardEntity&gt; newDecK= Stream.concat(team1Cards.stream(), team2Cards.stream())</span>
+<span class="fc" id="L191">                .toList();</span>
+
+<span class="fc" id="L193">        CardEntity[] array = newDecK.toArray(new CardEntity[32]);</span>
+
+<span class="fc" id="L195">        game.setDeck(array);</span>
+
+<span class="fc" id="L197">            game.getThisRoundCards().get(1).clear();</span>
+<span class="fc" id="L198">            game.getThisRoundCards().get(0).clear();</span>
+
+
+<span class="fc" id="L201">        this.setFirstPlayer2(game.getFirstPlayerRound(),gameID);</span>
+<span class="fc" id="L202">        this.startRound(gameID);</span>
+        }
+<span class="fc" id="L204">    }</span>
+
+
+    public void  endGame(int gameID)  {
+<span class="fc" id="L208">        GameEntity game =repository.getGame(gameID);</span>
+
+
+        int winner;
+<span class="fc" id="L212">        UserEntity[] ids = new UserEntity[4];</span>
+<span class="fc bfc" id="L213" title="All 2 branches covered.">        for(int i = 1; i &lt;= 4; i++) {</span>
+<span class="fc" id="L214">            int newID = game.getPlayers().get(i).getId();</span>
+<span class="fc bfc" id="L215" title="All 2 branches covered.">            if (newID &gt; 0) {</span>
+<span class="fc" id="L216">                ids[i-1] = (game.getPlayers().get(i));</span>
+            }
+            else {
+<span class="fc" id="L219">                ids[i-1] = null;</span>
+            }
+
+        }
+
+
+<span class="pc bpc" id="L225" title="1 of 2 branches missed.">        if(game.getScores().get(0) &lt; game.getScores().get(1)) {</span>
+<span class="nc" id="L226">            winner = 1;</span>
+        }
+        else {
+<span class="fc" id="L229">            winner = 2;</span>
+        }
+
+
+<span class="fc" id="L233">        GameScoreEntity scores = GameScoreEntity.builder()</span>
+<span class="fc" id="L234">                .player1(ids[0])</span>
+<span class="fc" id="L235">                .player2(ids[1])</span>
+<span class="fc" id="L236">                .player3(ids[2])</span>
+<span class="fc" id="L237">                .player4(ids[3])</span>
+<span class="fc" id="L238">                .team1Score(game.getScores().get(1))</span>
+<span class="fc" id="L239">                .team2Score(game.getScores().get(0))</span>
+<span class="fc" id="L240">                .winnerTeam(winner)</span>
+<span class="fc" id="L241">                .build();</span>
+
+
+<span class="fc" id="L244">        scoresRepository.save(scores);</span>
+
+<span class="fc" id="L246">        repository.deleteGame(gameID);</span>
+
+<span class="fc" id="L248">        String to = &quot;/game/&quot; + gameID;</span>
+<span class="fc" id="L249">        messagingTemplate.convertAndSend(to, scores);</span>
+<span class="fc" id="L250">    }</span>
+
+    public void calculateScores(int gameID){
+<span class="fc" id="L253">        GameEntity game =repository.getGame(gameID);</span>
+<span class="fc" id="L254">        ArrayList&lt;CardEntity&gt; team1 = game.getThisRoundCards().get(0);</span>
+
+<span class="fc" id="L256">        int team1Scores = 0;</span>
+
+<span class="pc bpc" id="L258" title="1 of 2 branches missed.">        for(CardEntity card : team1) {</span>
+<span class="nc" id="L259">            team1Scores += card.getPoints();</span>
+<span class="nc" id="L260">        }</span>
+<span class="fc" id="L261">        team1Scores = Math.round((float) team1Scores / 10);</span>
+
+<span class="fc" id="L263">        ArrayList&lt;CardEntity&gt; team2 = game.getThisRoundCards().get(1);</span>
+
+<span class="fc" id="L265">        int team2Scores = 0;</span>
+
+<span class="fc bfc" id="L267" title="All 2 branches covered.">        for(CardEntity card : team2) {</span>
+<span class="fc" id="L268">            team2Scores += card.getPoints();</span>
+<span class="fc" id="L269">        }</span>
+
+<span class="fc" id="L271">        team2Scores = Math.round((float) team2Scores / 10);</span>
+
+<span class="fc" id="L273">        int ds = game.getScores().get(0) + team1Scores;</span>
+
+<span class="fc" id="L275">        int ds2 = game.getScores().get(1) + team2Scores;</span>
+
+
+<span class="fc" id="L278">        game.getScores().clear();</span>
+<span class="fc" id="L279">        game.getScores().put(0,ds);</span>
+<span class="fc" id="L280">        game.getScores().put(1,ds2);</span>
+
+
+<span class="fc" id="L283">    }</span>
+
+    public void endBucket(int gameID){
+
+
+<span class="fc" id="L288">        GameEntity game = repository.getGame(gameID);</span>
+<span class="fc" id="L289">        ArrayList&lt;CardEntity&gt; bucket = game.getBucket();</span>
+
+<span class="fc" id="L291">        CardEntity card = bucket.stream().filter(x -&gt; x.getSuit().equals(game.getCardToAnswer().getSuit()))</span>
+<span class="fc" id="L292">                .max(Comparator.comparing(CardEntity::getPoints)).orElseThrow(NoSuchElementException::new);</span>
+
+
+
+<span class="fc" id="L296">        int winnerPlayerIndex = bucket.indexOf(card);</span>
+
+<span class="fc" id="L298">        List&lt;Integer&gt; players = game.getOrder().stream().toList();</span>
+<span class="fc" id="L299">        int winnerID = players.get(winnerPlayerIndex);</span>
+
+<span class="fc" id="L301">        game.setFirstPlayerBucket(winnerID);</span>
+
+<span class="fc bfc" id="L303" title="All 2 branches covered.">        for(CardEntity card1 : bucket) {</span>
+<span class="fc" id="L304">            game.getThisRoundCards().get((winnerID % 2)).add(card1);</span>
+<span class="fc" id="L305">        }</span>
+
+
+<span class="fc" id="L308">        game.setBucket(new ArrayList&lt;&gt;());</span>
+<span class="fc" id="L309">        game.setCardToAnswer(null);</span>
+
+
+<span class="pc bpc" id="L312" title="1 of 2 branches missed.">        if (game.getCurrentBucket() != 8){</span>
+
+<span class="fc" id="L314">        this.setFirstPlayer2(winnerPlayerIndex,gameID);</span>
+<span class="fc" id="L315">            int bucket1 =  game.getCurrentBucket() + 1;</span>
+<span class="fc" id="L316">            game.setCurrentBucket(bucket1);</span>
+
+<span class="fc" id="L318">        askPlayerForACard(game.getOrder().getFirst(),gameID);</span>
+<span class="fc" id="L319">        }</span>
+        else{
+<span class="nc" id="L321">            game.setCurrentBucket(1);</span>
+<span class="nc" id="L322">            endRound(gameID);</span>
+        }
+
+<span class="fc" id="L325">    }</span>
+
+
+
+
+    public void askPlayerForACard(int playerIDinGame,int gameID){
+<span class="fc" id="L331">        GameEntity game =repository.getGame(gameID);</span>
+<span class="fc" id="L332">       int playerID = game.getPlayers().get(playerIDinGame).getId();</span>
+<span class="fc bfc" id="L333" title="All 2 branches covered.">       if (playerID &lt;= 0) {</span>
+           List&lt;CardEntity&gt; cards;
+<span class="fc" id="L335">           cards = playableCards(game.getHands().get(game.getOrder().getFirst()),game.getCardToAnswer());</span>
+<span class="fc" id="L336">           this.playCard(playerID,cards.get(0).getId(),gameID,1500);</span>
+       }
+<span class="fc" id="L338">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

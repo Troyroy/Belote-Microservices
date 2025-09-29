@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Belote</a> &gt; <a href="index.source.html" class="el_package">belote.ex.business.imp</a> &gt; <span class="el_source">UserService.java</span></div><h1>UserService.java</h1><pre class="source lang-java linenums">package belote.ex.business.imp;
+
+import belote.ex.business.UserServiceInt;
+import belote.ex.business.exceptions.NotFoundException;
+import belote.ex.config.security.token.AccessTokenEncoder;
+import belote.ex.config.security.token.impl.AccessTokenImpl;
+import belote.ex.domain.*;
+import belote.ex.persistance.UsersRepository;
+import belote.ex.persistance.entity.UserEntity;
+import lombok.AllArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.util.IllegalFormatCodePointException;
+import java.util.List;
+
+@Service
+@AllArgsConstructor
+public class UserService implements UserServiceInt {
+    private UsersRepository repository;
+    private final PasswordEncoder passwordEncoder;
+    private final AccessTokenEncoder accessTokenEncoder;
+
+    @Override
+    public GetAllUsersResponse getAllUsers() {
+<span class="fc" id="L26">        List&lt;UserEntity&gt; users = repository.findAll();</span>
+
+<span class="fc" id="L28">        final GetAllUsersResponse response = new GetAllUsersResponse();</span>
+<span class="fc" id="L29">        List&lt;User&gt; allUsers = users</span>
+<span class="fc" id="L30">                .stream()</span>
+<span class="fc" id="L31">                .map(UserConverter::convertUser)</span>
+<span class="fc" id="L32">                .toList();</span>
+<span class="fc" id="L33">        response.setUsers(allUsers);</span>
+
+<span class="fc" id="L35">        return  response;</span>
+    }
+
+    @Override
+    public GetUserResponse getUser(int id)  {
+
+<span class="pc" id="L41">        UserEntity user = repository.findById(id).orElseThrow(() -&gt; new NotFoundException(&quot;User not found&quot;));</span>
+
+<span class="fc" id="L43">            return GetUserResponse.builder()</span>
+<span class="fc" id="L44">                    .id(user.getId())</span>
+<span class="fc" id="L45">                    .username(user.getUsername())</span>
+<span class="fc" id="L46">                    .password(user.getPassword())</span>
+<span class="fc" id="L47">                    .email(user.getEmail())</span>
+<span class="fc" id="L48">                    .build();</span>
+
+    }
+
+    @Override
+    public CreateUserResponce addUser(CreateUserRequest request) {
+
+<span class="fc" id="L55">        String encodedPassword = passwordEncoder.encode(request.getPassword());</span>
+
+<span class="fc" id="L57">        UserEntity user = repository.save(UserEntity.builder()</span>
+<span class="fc" id="L58">                                .username(request.getUsername())</span>
+<span class="fc" id="L59">                                .password(encodedPassword)</span>
+<span class="fc" id="L60">                                .email(request.getEmail())</span>
+<span class="fc" id="L61">                                .role(&quot;REGULAR&quot;)</span>
+<span class="fc" id="L62">                                .build());</span>
+
+<span class="fc" id="L64">        return CreateUserResponce.builder()</span>
+<span class="fc" id="L65">                .id(user.getId())</span>
+<span class="fc" id="L66">                .build();</span>
+    }
+
+    @Override
+    public void deleteUser(int id) {
+<span class="fc" id="L71">        repository.deleteById(id);</span>
+<span class="fc" id="L72">    }</span>
+
+    @Override
+    public void updateUser(int id, String username) {
+<span class="fc" id="L76">        this.getUser(id);</span>
+<span class="fc" id="L77">        repository.findById(id).ifPresent(user -&gt; user.setUsername(username));</span>
+<span class="fc" id="L78">    }</span>
+
+    @Override
+    public LoginResponce loginUser(String email, String password) {
+
+
+<span class="nc" id="L84">        UserEntity user = repository.findAll().stream()</span>
+<span class="nc bnc" id="L85" title="All 4 branches missed.">                .filter(x -&gt; (x.getEmail().equals(email)) &amp;&amp; (passwordEncoder.matches(password, x.getPassword())))</span>
+<span class="nc" id="L86">                .findFirst().orElseThrow(() -&gt; new NotFoundException(&quot;No matching credentials&quot;));</span>
+
+
+<span class="nc" id="L89">        String token = generateAccessToken(user);</span>
+
+<span class="nc" id="L91">        return LoginResponce.builder()</span>
+<span class="nc" id="L92">                .id(user.getId())</span>
+<span class="nc" id="L93">                .token(token).build();</span>
+    }
+
+    private String generateAccessToken(UserEntity user) {
+<span class="nc" id="L97">        Integer userId = user.getId();</span>
+<span class="nc" id="L98">        String role = user.getRole();</span>
+
+<span class="nc" id="L100">        return accessTokenEncoder.encode(</span>
+<span class="nc" id="L101">                new AccessTokenImpl(user.getUsername(), userId, role));</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

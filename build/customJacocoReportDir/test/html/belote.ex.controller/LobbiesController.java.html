@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LobbiesController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Belote</a> &gt; <a href="index.source.html" class="el_package">belote.ex.controller</a> &gt; <span class="el_source">LobbiesController.java</span></div><h1>LobbiesController.java</h1><pre class="source lang-java linenums">package belote.ex.controller;
+
+import belote.ex.business.LobbyServiceInt;
+import belote.ex.business.UserServiceInt;
+import belote.ex.domain.GetUserResponse;
+import belote.ex.persistance.entity.LobbyEntity;
+import belote.ex.persistance.entity.UserEntity;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.security.RolesAllowed;
+import lombok.AllArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.web.bind.annotation.*;
+
+import java.text.MessageFormat;
+
+@RestController
+@RequestMapping(&quot;/lobby&quot;)
+@AllArgsConstructor
+
+public class LobbiesController {
+    LobbyServiceInt lobbyService;
+    UserServiceInt userService;
+    private final SimpMessagingTemplate messagingTemplate;
+
+
+    @PostMapping(&quot;{userID}&quot;)
+    public int createLobby(@PathVariable int userID) {
+
+<span class="nc" id="L30">        GetUserResponse response = userService.getUser(userID);</span>
+
+<span class="nc" id="L32">        UserEntity user = UserEntity.builder()</span>
+<span class="nc" id="L33">                .id(response.getId())</span>
+<span class="nc" id="L34">                .username(response.getUsername())</span>
+<span class="nc" id="L35">                .email(response.getEmail())</span>
+<span class="nc" id="L36">                .password(response.getPassword())</span>
+<span class="nc" id="L37">                .build();</span>
+
+<span class="nc" id="L39">        return  lobbyService.createLobby(user);</span>
+    }
+
+    @PostMapping(&quot;{userID}/{lobbyID}&quot;)
+    public void joinLobby(@PathVariable int userID, @PathVariable int lobbyID) throws JsonProcessingException {
+<span class="nc" id="L44">        GetUserResponse response = userService.getUser(userID);</span>
+
+<span class="nc" id="L46">        UserEntity user = UserEntity.builder()</span>
+<span class="nc" id="L47">                .id(response.getId())</span>
+<span class="nc" id="L48">                .username(response.getUsername())</span>
+<span class="nc" id="L49">                .email(response.getEmail())</span>
+<span class="nc" id="L50">                .password(response.getPassword())</span>
+<span class="nc" id="L51">                .build();</span>
+
+<span class="nc" id="L53">        var mapper = new ObjectMapper();</span>
+<span class="nc" id="L54">        String lobbyTo = MessageFormat.format(&quot;/lobby/{0}&quot;, lobbyID);</span>
+
+<span class="nc" id="L56">        lobbyService.joinLobby(user,lobbyID);</span>
+<span class="nc" id="L57">        messagingTemplate.convertAndSend(lobbyTo, mapper.writeValueAsString(lobbyService.getLobby(lobbyID)));</span>
+
+<span class="nc" id="L59">    }</span>
+
+    @GetMapping(&quot;{id}&quot;)
+    public LobbyEntity getLobby(@PathVariable int id) {
+<span class="nc" id="L63">        return lobbyService.getLobby(id);</span>
+    }
+
+    @DeleteMapping(&quot;{id}&quot;)
+    public void deleteLobby(@PathVariable int id) {
+<span class="nc" id="L68">        lobbyService.deleteLobby(id);</span>
+<span class="nc" id="L69">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

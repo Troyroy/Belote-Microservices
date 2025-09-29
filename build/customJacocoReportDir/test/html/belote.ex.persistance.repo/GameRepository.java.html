@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GameRepository.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Belote</a> &gt; <a href="index.source.html" class="el_package">belote.ex.persistance.repo</a> &gt; <span class="el_source">GameRepository.java</span></div><h1>GameRepository.java</h1><pre class="source lang-java linenums">package belote.ex.persistance.repo;
+
+import belote.ex.persistance.GameRepositoryInt;
+import belote.ex.persistance.entity.CardEntity;
+import belote.ex.persistance.entity.GameEntity;
+import belote.ex.persistance.entity.LobbyEntity;
+import belote.ex.persistance.entity.UserEntity;
+import org.springframework.stereotype.Repository;
+
+import java.util.*;
+
+@Repository
+public class GameRepository implements GameRepositoryInt {
+<span class="fc" id="L14">    private static final List&lt;GameEntity&gt; games = new ArrayList&lt;&gt;();</span>
+
+<span class="fc" id="L16">    private static int id = 1;</span>
+<span class="fc" id="L17">    public GameRepository(){</span>
+        //empty constructor because no arguments are needed
+<span class="fc" id="L19">    }</span>
+
+    @Override
+    public GameEntity getGame(int id) {
+<span class="nc bnc" id="L23" title="All 2 branches missed.">        for (GameEntity game : games){</span>
+<span class="nc bnc" id="L24" title="All 2 branches missed.">            if (game.getId() == id){</span>
+<span class="nc" id="L25">                return game;</span>
+            }
+<span class="nc" id="L27">        }</span>
+<span class="nc" id="L28">        return null;</span>
+    }
+
+    @Override
+    public List&lt;GameEntity&gt; getAllGames(){
+<span class="fc" id="L33">        return games;</span>
+    }
+
+    public static void nextID() {
+<span class="nc" id="L37">        id++;</span>
+<span class="nc" id="L38">    }</span>
+
+
+    public int createGame(LobbyEntity lobby) {
+
+<span class="nc" id="L43">        CardEntity[] deckOfCards = new CardEntity[32];</span>
+
+<span class="nc" id="L45">        String[] suits = {&quot;Diamonds&quot;, &quot;Clubs&quot;, &quot;Hearts&quot;, &quot;Spades&quot;};</span>
+<span class="nc" id="L46">        String[] ranks = {&quot;King&quot;, &quot;Queen&quot;, &quot;Jack&quot;, &quot;Ten&quot;, &quot;Nine&quot;, &quot;Eight&quot;, &quot;Seven&quot;, &quot;Ace&quot;};</span>
+
+<span class="nc" id="L48">        deckOfCards[0] = (CardEntity.builder().id(0).points(11).rank(ranks[7]).suit(suits[0]).build());</span>
+<span class="nc" id="L49">        deckOfCards[1] = (CardEntity.builder().id(1).points(4).rank(ranks[0]).suit(suits[0]).build());</span>
+<span class="nc" id="L50">        deckOfCards[2] = (CardEntity.builder().id(2).points(3).rank(ranks[1]).suit(suits[0]).build());</span>
+<span class="nc" id="L51">        deckOfCards[3] = (CardEntity.builder().id(3).points(20).rank(ranks[2]).suit(suits[0]).build());</span>
+<span class="nc" id="L52">        deckOfCards[4] = (CardEntity.builder().id(4).points(10).rank(ranks[3]).suit(suits[0]).build());</span>
+<span class="nc" id="L53">        deckOfCards[5] = (CardEntity.builder().id(5).points(14).rank(ranks[4]).suit(suits[0]).build());</span>
+<span class="nc" id="L54">        deckOfCards[6] = (CardEntity.builder().id(6).points(0).rank(ranks[5]).suit(suits[0]).build());</span>
+<span class="nc" id="L55">        deckOfCards[7] = (CardEntity.builder().id(7).points(-1).rank(ranks[6]).suit(suits[0]).build());</span>
+
+<span class="nc" id="L57">        deckOfCards[8] = (CardEntity.builder().id(8).points(11).rank(ranks[7]).suit(suits[1]).build());</span>
+<span class="nc" id="L58">        deckOfCards[9] = (CardEntity.builder().id(9).points(4).rank(ranks[0]).suit(suits[1]).build());</span>
+<span class="nc" id="L59">        deckOfCards[10] = (CardEntity.builder().id(10).points(3).rank(ranks[1]).suit(suits[1]).build());</span>
+<span class="nc" id="L60">        deckOfCards[11] = (CardEntity.builder().id(11).points(20).rank(ranks[2]).suit(suits[1]).build());</span>
+<span class="nc" id="L61">        deckOfCards[12] = (CardEntity.builder().id(12).points(10).rank(ranks[3]).suit(suits[1]).build());</span>
+<span class="nc" id="L62">        deckOfCards[13] = (CardEntity.builder().id(13).points(14).rank(ranks[4]).suit(suits[1]).build());</span>
+<span class="nc" id="L63">        deckOfCards[14] = (CardEntity.builder().id(14).points(0).rank(ranks[5]).suit(suits[1]).build());</span>
+<span class="nc" id="L64">        deckOfCards[15] = (CardEntity.builder().id(15).points(-1).rank(ranks[6]).suit(suits[1]).build());</span>
+
+
+<span class="nc" id="L67">        deckOfCards[16] = (CardEntity.builder().id(16).points(11).rank(ranks[7]).suit(suits[2]).build());</span>
+<span class="nc" id="L68">        deckOfCards[17] = (CardEntity.builder().id(17).points(4).rank(ranks[0]).suit(suits[2]).build());</span>
+<span class="nc" id="L69">        deckOfCards[18] = (CardEntity.builder().id(18).points(3).rank(ranks[1]).suit(suits[2]).build());</span>
+<span class="nc" id="L70">        deckOfCards[19] = (CardEntity.builder().id(19).points(20).rank(ranks[2]).suit(suits[2]).build());</span>
+<span class="nc" id="L71">        deckOfCards[20] = (CardEntity.builder().id(20).points(10).rank(ranks[3]).suit(suits[2]).build());</span>
+<span class="nc" id="L72">        deckOfCards[21] = (CardEntity.builder().id(21).points(14).rank(ranks[4]).suit(suits[2]).build());</span>
+<span class="nc" id="L73">        deckOfCards[22] = (CardEntity.builder().id(22).points(0).rank(ranks[5]).suit(suits[2]).build());</span>
+<span class="nc" id="L74">        deckOfCards[23] = (CardEntity.builder().id(23).points(-1).rank(ranks[6]).suit(suits[2]).build());</span>
+
+
+<span class="nc" id="L77">        deckOfCards[24] = (CardEntity.builder().id(24).points(11).rank(ranks[7]).suit(suits[3]).build());</span>
+<span class="nc" id="L78">        deckOfCards[25] = (CardEntity.builder().id(25).points(4).rank(ranks[0]).suit(suits[3]).build());</span>
+<span class="nc" id="L79">        deckOfCards[26] = (CardEntity.builder().id(26).points(3).rank(ranks[1]).suit(suits[3]).build());</span>
+<span class="nc" id="L80">        deckOfCards[27] = (CardEntity.builder().id(27).points(20).rank(ranks[2]).suit(suits[3]).build());</span>
+<span class="nc" id="L81">        deckOfCards[28] = (CardEntity.builder().id(28).points(10).rank(ranks[3]).suit(suits[3]).build());</span>
+<span class="nc" id="L82">        deckOfCards[29] = (CardEntity.builder().id(29).points(14).rank(ranks[4]).suit(suits[3]).build());</span>
+<span class="nc" id="L83">        deckOfCards[30] = (CardEntity.builder().id(30).points(0).rank(ranks[5]).suit(suits[3]).build());</span>
+<span class="nc" id="L84">        deckOfCards[31] = (CardEntity.builder().id(31).points(-1).rank(ranks[6]).suit(suits[3]).build());</span>
+
+
+
+
+<span class="nc" id="L89">        HashMap&lt;Integer, UserEntity&gt; playerIDs = new HashMap&lt;&gt;();</span>
+
+
+<span class="nc" id="L92">        int botID = -1;</span>
+<span class="nc bnc" id="L93" title="All 2 branches missed.">        for(int i=1; i&lt;5; i++) {</span>
+<span class="nc bnc" id="L94" title="All 2 branches missed.">            if(i &lt;= lobby.getPlayers().size()){</span>
+<span class="nc" id="L95">            playerIDs.put(i,lobby.getPlayers().get(i-1));</span>
+            }
+            else{
+<span class="nc" id="L98">                playerIDs.put(i,UserEntity.builder().id(botID).username(&quot;Bot &quot;+ Math.abs(botID)).build());</span>
+<span class="nc" id="L99">                botID--;</span>
+            }
+        }
+
+<span class="nc" id="L103">        HashMap&lt;Integer,ArrayList&lt;CardEntity&gt;&gt; hands = new HashMap&lt;&gt;();</span>
+
+<span class="nc" id="L105">        hands.put(1,new ArrayList&lt;&gt;());</span>
+<span class="nc" id="L106">        hands.put(2,new ArrayList&lt;&gt;());</span>
+<span class="nc" id="L107">        hands.put(3,new ArrayList&lt;&gt;());</span>
+<span class="nc" id="L108">        hands.put(4,new ArrayList&lt;&gt;());</span>
+
+<span class="nc" id="L110">        Deque&lt;Integer&gt; order = new LinkedList&lt;&gt;();</span>
+
+<span class="nc" id="L112">        order.add(1);</span>
+<span class="nc" id="L113">        order.add(2);</span>
+<span class="nc" id="L114">        order.add(3);</span>
+<span class="nc" id="L115">        order.add(4);</span>
+
+<span class="nc" id="L117">        HashMap&lt;Integer,ArrayList&lt;CardEntity&gt;&gt; roundCards = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L118">        roundCards.put(0,new ArrayList&lt;&gt;());</span>
+<span class="nc" id="L119">        roundCards.put(1,new ArrayList&lt;&gt;());</span>
+
+<span class="nc" id="L121">        HashMap&lt;Integer,Integer&gt; scores = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L122">        scores.put(0,0);</span>
+<span class="nc" id="L123">        scores.put(1,0);</span>
+
+<span class="nc" id="L125">        games.add(GameEntity.builder().id(id).players(playerIDs).thisRoundCards(roundCards).bucket(new ArrayList&lt;&gt;()).currentBucket(1).order(order).hands(hands).deck(deckOfCards).firstPlayerBucket(1).firstPlayerRound(1).scores(scores).build());</span>
+
+<span class="nc" id="L127">        nextID();</span>
+<span class="nc" id="L128">        return id - 1;</span>
+    }
+
+    @Override
+    public void deleteGame(int id) {
+<span class="nc bnc" id="L133" title="All 2 branches missed.">        games.remove(games.stream().filter(x -&gt; x.getId() == id).findFirst().orElse(null));</span>
+<span class="nc" id="L134">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

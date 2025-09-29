@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UsersController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Belote</a> &gt; <a href="index.source.html" class="el_package">belote.ex.controller</a> &gt; <span class="el_source">UsersController.java</span></div><h1>UsersController.java</h1><pre class="source lang-java linenums">package belote.ex.controller;
+
+import belote.ex.business.UserServiceInt;
+import belote.ex.business.exceptions.NotFoundException;
+import belote.ex.domain.*;
+import jakarta.annotation.security.RolesAllowed;
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import static org.springframework.http.HttpStatus.NOT_FOUND;
+
+@RestController
+@RequestMapping(&quot;/users&quot;)
+@AllArgsConstructor
+public class UsersController {
+    private UserServiceInt userUseCases;
+
+    @RolesAllowed({&quot;ADMIN&quot;})
+    @GetMapping
+    public ResponseEntity&lt;GetAllUsersResponse&gt; getUsers() {
+<span class="fc" id="L25">      return ResponseEntity.ok(userUseCases.getAllUsers());</span>
+
+    }
+
+    @GetMapping(&quot;{id}&quot;)
+    public ResponseEntity&lt;GetUserResponse&gt; getUsers(@PathVariable int id) {
+        try {
+
+<span class="fc" id="L33">            return ResponseEntity.ok(userUseCases.getUser(id));</span>
+        }
+<span class="fc" id="L35">        catch(NotFoundException ex){</span>
+<span class="fc" id="L36">            throw new ResponseStatusException(NOT_FOUND, &quot;No such id&quot;);</span>
+        }
+
+    }
+
+    @PostMapping
+    public ResponseEntity&lt;CreateUserResponce&gt; addUser(@RequestBody @Valid CreateUserRequest request){
+
+<span class="fc" id="L44">        CreateUserResponce response = userUseCases.addUser(request);</span>
+        
+<span class="fc" id="L46">        return  ResponseEntity.ok().body(response);</span>
+    }
+
+    @PostMapping(&quot;/login&quot;)
+    public ResponseEntity&lt;LoginResponce&gt; loginUser(@RequestBody  LoginUserRequest request){
+
+<span class="fc" id="L52">        LoginResponce response = userUseCases.loginUser(request.getEmail(), request.getPassword());</span>
+
+<span class="fc" id="L54">        return  ResponseEntity.ok().body(response);</span>
+    }
+
+    @DeleteMapping(&quot;{id}&quot;)
+    public void deleteUser(@PathVariable int id) {
+<span class="fc" id="L59">        userUseCases.deleteUser(id);</span>
+
+<span class="fc" id="L61">    }</span>
+    @PutMapping()
+    public void updateUser(UpdateUserRequest request) {
+        //use id
+<span class="nc" id="L65">        userUseCases.updateUser(request.getId(),request.getUsername());</span>
+<span class="nc" id="L66">    }</span>
+
+    @PutMapping(&quot;{id}&quot;)
+    public void updateUser(@PathVariable int id, @RequestBody @Valid UpdateUserRequest request) {
+<span class="nc" id="L70">        userUseCases.updateUser(id,request.getUsername());</span>
+<span class="nc" id="L71">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
