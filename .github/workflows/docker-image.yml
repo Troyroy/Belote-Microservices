@@ -8,10 +8,35 @@ on:
 
 jobs:
 
-  build:
-
+  build-app:
     runs-on: ubuntu-latest
+    steps:
+    
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+    
+    - name: Build with Gradle
+      run: ./gradlew build
+    
+    - name: Upload JAR artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-jar
+        path: build/libs/Belote-1.0-SNAPSHOT.jar
+        retention-days: 1
 
+  build-docker-image:
+    needs: build-app
+    runs-on: ubuntu-latest
     steps:
 
     - name: Checkout code
