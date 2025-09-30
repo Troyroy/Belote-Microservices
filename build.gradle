@@ -2,15 +2,15 @@ plugins {
     id 'java'
     id 'jacoco'
     id 'org.springframework.boot' version '3.2.3'
-    id("org.sonarqube") version "4.4.1.3373"
+    id "org.sonarqube" version "4.4.1.3373"
 }
 
 
-sonar {
+sonarqube {
     properties {
-        property "sonar.java.coveragePlugin", "jacoco"
-        property("sonar.token", "sqa_b11d96cfefb4d1e44e8373b9b9f7cb5d0f27ccbd")
-        property("sonar.host.url", "http://localhost:9000")
+        property "sonar.projectKey", "Troyroy_Belote-Microservices"
+        property "sonar.organization", "troyroy"
+        property "sonar.host.url", "https://sonarcloud.io"
     }
 }
 tasks.named('sonarqube').configure {
