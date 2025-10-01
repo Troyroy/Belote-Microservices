@@ -13,7 +13,7 @@
 # Idea and gradle folder
 .idea/
 .gradle/
-.build
+build/
 
 # Package Files #
 *.jar
