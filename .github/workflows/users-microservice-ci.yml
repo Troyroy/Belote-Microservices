@@ -13,7 +13,7 @@ on:
 
 env:
   SERVICE_NAME: users-microservice
-  DOCKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/belote-users-microservice
+  DOCKER_IMAGE: ${{ secrets.DOCKERHUB_USER }}/belote-users-microservice
   SONAR_PROJECT_KEY: ${{ secrets.SONAR_ORGANIZATION }}_belote-users-microservice
 
 jobs:
@@ -72,7 +72,7 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
 
