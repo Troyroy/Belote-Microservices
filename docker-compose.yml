@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  game-microservice:
+    build:
+      context: .
+      dockerfile: microservices/game-microservice/Dockerfile
+    container_name: game-service
+    ports:
+      - "8081:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - GAME_DB_URL=${GAME_DB_URL}
+      - GAME_DB_USERNAME=${GAME_DB_USERNAME}
+      - GAME_DB_PASSWORD=${GAME_DB_PASSWORD}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  lobby-microservice:
+    build:
+      context: .
+      dockerfile: microservices/lobby-microservice/Dockerfile
+    container_name: lobby-service
+    ports:
+      - "8083:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  users-microservice:
+    build:
+      context: .
+      dockerfile: microservices/users-microservice/Dockerfile
+    container_name: users-service
+    ports:
+      - "8082:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - DB_URL=${DB_URL}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis-cache
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: redis-commander
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8084:8081"
+    depends_on:
+      - redis
+    networks:
+      - microservices-network
+
+volumes:
+  redis-data:
+
+networks:
+  microservices-network:
+    driver: bridge
