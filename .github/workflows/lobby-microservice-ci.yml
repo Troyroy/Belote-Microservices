@@ -2,7 +2,7 @@ name: Lobby Service CI/CD
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
     paths:
       - 'microservices/lobby-microservice/**'
       - 'shared/**'
