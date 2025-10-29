@@ -7,6 +7,9 @@ on:
       - 'microservices/users-microservice/**'
       - 'shared/**'
       - '.github/workflows/users-service-ci.yml'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'docker-compose.yml'
 
 env:
   SERVICE_NAME: users-microservice
