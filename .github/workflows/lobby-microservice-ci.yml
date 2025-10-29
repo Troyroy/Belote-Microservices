@@ -6,7 +6,7 @@ on:
     paths:
       - 'microservices/lobby-microservice/**'
       - 'shared/**'
-      - '.github/workflows/lobby-service-ci.yml'
+      - '.github/workflows/lobby-microservice-ci.yml'
       - 'build.gradle'
       - 'settings.gradle'
       - 'docker-compose.yml'

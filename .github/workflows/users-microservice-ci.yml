@@ -6,7 +6,7 @@ on:
     paths:
       - 'microservices/users-microservice/**'
       - 'shared/**'
-      - '.github/workflows/users-service-ci.yml'
+      - '.github/workflows/users-microservice-ci.yml'
       - 'build.gradle'
       - 'settings.gradle'
       - 'docker-compose.yml'

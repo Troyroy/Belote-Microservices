@@ -6,7 +6,7 @@ on:
     paths:
       - 'microservices/games-microservice/**'
       - 'shared/**'
-      - '.github/workflows/games-service-ci.yml'
+      - '.github/workflows/games-microservice-ci.yml'
       - 'build.gradle'
       - 'settings.gradle'
       - 'docker-compose.yml'
