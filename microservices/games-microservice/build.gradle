@@ -37,7 +37,7 @@ sonarqube {
 }
 
 bootJar {
-    archiveFileName = 'game-microservice.jar'
+    archiveFileName = 'games-microservice.jar'
 }
 
 bootRun {

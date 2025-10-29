@@ -1,4 +1,4 @@
-name: Lobby Service CI/CD
+name: Games Service CI/CD
 
 on:
   push:

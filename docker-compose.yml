@@ -4,15 +4,15 @@ services:
   game-microservice:
     build:
       context: .
-      dockerfile: microservices/game-microservice/Dockerfile
+      dockerfile: microservices/games-microservice/Dockerfile
     container_name: game-service
     ports:
       - "8081:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - GAME_DB_URL=${GAME_DB_URL}
-      - GAME_DB_USERNAME=${GAME_DB_USERNAME}
-      - GAME_DB_PASSWORD=${GAME_DB_PASSWORD}
+      - GAME_DB_URL=${GAMES_DB_URL}
+      - GAME_DB_USERNAME=${GAMES_DB_USERNAME}
+      - GAME_DB_PASSWORD=${GAMES_DB_PASSWORD}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     depends_on:
@@ -47,9 +47,9 @@ services:
       - "8082:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - DB_URL=${DB_URL}
-      - DB_USERNAME=${DB_USERNAME}
-      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_URL=${USERS_DB_URL}
+      - DB_USERNAME=${USERS_DB_USERNAME}
+      - DB_PASSWORD=${USERS_DB_PASSWORD}
       - JWT_SECRET=${JWT_SECRET}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
     networks:

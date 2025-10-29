@@ -1,6 +1,6 @@
 rootProject.name = 'Belote'
 
-include 'microservices:game-microservice'
+include 'microservices:games-microservice'
 include 'microservices:users-microservice'
 include 'microservices:lobby-microservice'
 

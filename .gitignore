@@ -11,8 +11,8 @@
 .mtj.tmp/
 
 # Env files
-.env
-.env.docker
+*.env
+*.env.docker
 
 # Idea and gradle folder
 .idea/

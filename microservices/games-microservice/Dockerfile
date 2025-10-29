@@ -12,10 +12,10 @@ COPY gradlew ./
 COPY shared ./shared
 
 # Copy the specific microservice
-COPY microservices/game-microservice ./microservices/game-microservice
+COPY microservices/games-microservice ./microservices/games-microservice
 
 # Build the application
-RUN gradle :microservices:game-microservice:bootJar --no-daemon
+RUN gradle :microservices:games-microservice:bootJar --no-daemon
 
 # Runtime stage
 FROM openjdk:17-jdk-alpine
@@ -23,7 +23,7 @@ FROM openjdk:17-jdk-alpine
 WORKDIR /opt/app
 
 # Copy jar from builder stage
-COPY --from=builder /app/microservices/game-microservice/build/libs/game-microservice.jar app.jar
+COPY --from=builder /app/microservices/games-microservice/build/libs/games-microservice.jar app.jar
 
 EXPOSE 8080
 
