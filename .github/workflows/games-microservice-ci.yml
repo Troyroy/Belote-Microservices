@@ -80,5 +80,6 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: ./microservices/games-microservice/Dockerfile
           push: true
           tags: troyroy/belote_games_microservice:latest

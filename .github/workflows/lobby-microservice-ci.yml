@@ -80,5 +80,6 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: ./microservices/lobby-microservice/Dockerfile
           push: true
           tags: troyroy/belote_lobby_microservice:latest
