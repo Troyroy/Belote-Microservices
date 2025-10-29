@@ -19,8 +19,8 @@ dependencies {
 
 sonarqube {
     properties {
-        property "sonar.projectKey", "troyroy_belote-users-microservice"
-        property "sonar.projectName", "troyroy_belote-users-microservice"
+        property "sonar.projectKey", "troyroy_belote-games-microservice"
+        property "sonar.projectName", "troyroy_belote-games-microservice"
         property "sonar.organization", "troyroy"
         property "sonar.host.url", "https://sonarcloud.io"
 
@@ -40,7 +40,6 @@ bootJar {
     archiveFileName = 'game-microservice.jar'
 }
 
-// Custom port for this service (optional)
 bootRun {
     systemProperty 'server.port', '8090'
 }

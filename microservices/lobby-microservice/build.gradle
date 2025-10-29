@@ -1,0 +1,53 @@
+dependencies {
+    // Depend on shared modules
+    implementation project(':shared:common-events')
+    implementation project(':shared:common-models')
+
+    // Spring Boot dependencies
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // Redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'redis.clients:jedis:5.1.0'
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+
+    // WebSocket
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+    // JSON
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'com.h2database:h2'
+}
+
+sonarqube {
+    properties {
+        property "sonar.projectKey", "troyroy_belote-lobby-service"
+        property "sonar.projectName", "troyroy_belote-lobby-service"
+        property "sonar.organization", "troyroy"
+        property "sonar.host.url", "https://sonarcloud.io"
+
+        property "sonar.sources", "src/main/java"
+        property "sonar.tests", "src/test/java"
+        property "sonar.java.binaries", "build/classes/java/main"
+        property "sonar.java.test.binaries", "build/classes/java/test"
+
+        property "sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml"
+
+        property "sonar.sourceEncoding", "UTF-8"
+        property "sonar.java.source", "17"
+    }
+}
+
+bootJar {
+    archiveFileName = 'lobby-microservice.jar'
+}
+
+bootRun {
+    systemProperty 'server.port', '8091'
+}

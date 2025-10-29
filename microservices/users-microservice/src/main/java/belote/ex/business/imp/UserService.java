@@ -5,7 +5,7 @@ import belote.ex.business.exceptions.NotFoundException;
 import belote.ex.config.security.token.AccessTokenEncoder;
 import belote.ex.config.security.token.impl.AccessTokenImpl;
 import belote.ex.domain.*;
-import belote.ex.persistance.UsersRepository;
+import belote.ex.persistance.UserRepository;
 import belote.ex.persistance.entity.UserEntity;
 import lombok.AllArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,7 +18,7 @@ import java.util.Optional;
 @Service
 @AllArgsConstructor
 public class UserService implements UserServiceInt {
-    private UsersRepository repository;
+    private UserRepository repository;
     private final PasswordEncoder passwordEncoder;
     private final AccessTokenEncoder accessTokenEncoder;
 
@@ -86,7 +86,7 @@ public class UserService implements UserServiceInt {
                 .filter(x -> (x.getEmail().equals(email)) && (passwordEncoder.matches(password, x.getPassword())))
                 .findFirst().orElseThrow(() -> new NotFoundException("No matching credentials"));*/
 
-        UserEntity user2 = Optional.ofNullable(repository.findByEmail(email))
+        UserEntity user2 = repository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("No matching credentials"));
 
         String token = generateAccessToken(user2);

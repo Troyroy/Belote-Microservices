@@ -1,0 +1,39 @@
+dependencies {
+    // User service specific dependencies
+    implementation 'org.flywaydb:flyway-mysql'
+    implementation 'mysql:mysql-connector-java:8.0.33'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+
+    testImplementation 'org.springframework.security:spring-security-test'
+}
+
+sonarqube {
+    properties {
+        property "sonar.projectKey", "troyroy_belote-users-microservice"
+        property "sonar.projectName", "troyroy_belote-users-microservice"
+        property "sonar.organization", "troyroy"
+        property "sonar.host.url", "https://sonarcloud.io"
+
+        property "sonar.sources", "src/main/java"
+        property "sonar.tests", "src/test/java"
+        property "sonar.java.binaries", "build/classes/java/main"
+        property "sonar.java.test.binaries", "build/classes/java/test"
+
+        property "sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml"
+
+        property "sonar.sourceEncoding", "UTF-8"
+        property "sonar.java.source", "17"
+    }
+}
+
+bootJar {
+    archiveFileName = 'users-microservice.jar'
+}
+
+bootRun {
+    systemProperty 'server.port', '8092'
+}

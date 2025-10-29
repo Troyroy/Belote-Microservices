@@ -2,7 +2,7 @@ package belote.ex.business.imp;
 
 import belote.ex.config.security.token.AccessTokenEncoder;
 import belote.ex.domain.*;
-import belote.ex.persistance.UsersRepository;
+import belote.ex.persistance.UserRepository;
 import belote.ex.persistance.entity.UserEntity;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,7 +25,7 @@ class UserServiceTest {
 
 
     @Mock
-    private UsersRepository repository;
+    private UserRepository repository;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -40,8 +40,8 @@ class UserServiceTest {
     void testGetAllUsers() {
 
         List<UserEntity> users = List.of(
-                new UserEntity(1, "user1", "password1", "email1", "REGULAR"),
-                new UserEntity(2, "user2", "password2", "email2","REGULAR"));
+                new UserEntity(1, "user1", "password1", "email1", "REGULAR",null,null),
+                new UserEntity(2, "user2", "password2", "email2","REGULAR",null, null));
         when(repository.findAll()).thenReturn(users);
 
         GetAllUsersResponse response = userService.getAllUsers();
@@ -54,7 +54,7 @@ class UserServiceTest {
     @Test
     void testGetUser() {
 
-        UserEntity user = new UserEntity(1, "user1", "password1", "email1","REGULAR");
+        UserEntity user = new UserEntity(1, "user1", "password1", "email1","REGULAR",null,null);
         when(repository.findById(1)).thenReturn(Optional.of(user));
 
         GetUserResponse response = userService.getUser(1);
@@ -68,7 +68,7 @@ class UserServiceTest {
     void testAddUser() {
 
         CreateUserRequest request = new CreateUserRequest("user1", "password1", "email1");
-        when(repository.save(any())).thenReturn(new UserEntity(1, "user1", "password1", "email1","REGULAR"));
+        when(repository.save(any())).thenReturn(new UserEntity(1, "user1", "password1", "email1","REGULAR",null,null));
 
         CreateUserResponce response = userService.addUser(request);
 
@@ -86,7 +86,7 @@ class UserServiceTest {
     @Test
     void testUpdateUser() {
 
-        UserEntity user = new UserEntity(1, "user1", "password1", "email1","REGULAR");
+        UserEntity user = new UserEntity(1, "user1", "password1", "email1","REGULAR",null,null);
         when(repository.findById(1)).thenReturn(Optional.of(user));
 
         userService.updateUser(1, "newUsername");

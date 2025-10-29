@@ -1,70 +1,105 @@
 package belote.ex.controller;
 
-import belote.ex.business.LobbyServiceInt;
-import belote.ex.business.UserServiceInt;
-import belote.ex.domain.GetUserResponse;
+import belote.ex.business.imp.LobbyService;
+import belote.ex.domain.CreateLobbyRequest;
+import belote.ex.domain.JoinLobbyRequest;
 import belote.ex.persistance.entity.LobbyEntity;
-import belote.ex.persistance.entity.UserEntity;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.security.RolesAllowed;
-import lombok.AllArgsConstructor;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.text.MessageFormat;
+import java.util.List;
 
 @RestController
 @RequestMapping("/lobby")
-@AllArgsConstructor
-
+@RequiredArgsConstructor
+@Slf4j
 public class LobbiesController {
-    LobbyServiceInt lobbyService;
-    UserServiceInt userService;
-    private final SimpMessagingTemplate messagingTemplate;
+    private final LobbyService lobbyService;
 
+    /**
+     * Create a new lobby
+     */
+    @PostMapping
+    public ResponseEntity<LobbyCreationResponse> createLobby(
+            @Valid @RequestBody CreateLobbyRequest request) {
 
-    @PostMapping("{userID}")
-    public int createLobby(@PathVariable int userID) {
+        String lobbyId = lobbyService.createLobby(
+                request.getLobbyName(),
+                request.getHostId(),
+                request.getGameMode()
+        );
 
-        GetUserResponse response = userService.getUser(userID);
-
-        UserEntity user = UserEntity.builder()
-                .id(response.getId())
-                .username(response.getUsername())
-                .email(response.getEmail())
-                .password(response.getPassword())
-                .build();
-
-        return  lobbyService.createLobby(user);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new LobbyCreationResponse(lobbyId, "Lobby created"));
     }
 
-    @PostMapping("{userID}/{lobbyID}")
-    public void joinLobby(@PathVariable int userID, @PathVariable int lobbyID) throws JsonProcessingException {
-        GetUserResponse response = userService.getUser(userID);
+    /**
+     * Get lobby details
+     */
+    @GetMapping("/{lobbyId}")
+    public ResponseEntity<LobbyEntity> getLobby(@PathVariable String lobbyId) {
+        LobbyEntity lobby = lobbyService.getLobby(lobbyId);
 
-        UserEntity user = UserEntity.builder()
-                .id(response.getId())
-                .username(response.getUsername())
-                .email(response.getEmail())
-                .password(response.getPassword())
-                .build();
+        if (lobby == null) {
+            return ResponseEntity.notFound().build();
+        }
 
-        var mapper = new ObjectMapper();
-        String lobbyTo = MessageFormat.format("/lobby/{0}", lobbyID);
-
-        lobbyService.joinLobby(user,lobbyID);
-        messagingTemplate.convertAndSend(lobbyTo, mapper.writeValueAsString(lobbyService.getLobby(lobbyID)));
-
+        return ResponseEntity.ok(lobby);
     }
 
-    @GetMapping("{id}")
-    public LobbyEntity getLobby(@PathVariable int id) {
-        return lobbyService.getLobby(id);
+    /**
+     * Join a lobby
+     */
+    @PostMapping("/{lobbyId}/join")
+    public ResponseEntity<String> joinLobby(
+            @PathVariable String lobbyId,
+            @Valid @RequestBody JoinLobbyRequest request) {
+
+        boolean success = lobbyService.joinLobby(lobbyId, request.getPlayerId());
+
+        if (!success) {
+            return ResponseEntity.badRequest().body("Cannot join lobby");
+        }
+
+        return ResponseEntity.ok("Joined lobby successfully");
     }
 
-    @DeleteMapping("{id}")
-    public void deleteLobby(@PathVariable int id) {
-        lobbyService.deleteLobby(id);
+    /**
+     * Leave a lobby
+     */
+    @PostMapping("/{lobbyId}/leave")
+    public ResponseEntity<String> leaveLobby(
+            @PathVariable String lobbyId,
+            @RequestParam Integer playerId) {
+
+        lobbyService.leaveLobby(lobbyId, playerId);
+        return ResponseEntity.ok("Left lobby successfully");
     }
+
+    /**
+     * Start game from lobby
+     */
+    @PostMapping("/{lobbyId}/start")
+    public ResponseEntity<String> startGame(@PathVariable String lobbyId) {
+        try {
+            lobbyService.startGame(lobbyId);
+            return ResponseEntity.ok("Game is starting...");
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    /**
+     * Get all active lobbies
+     */
+    @GetMapping
+    public ResponseEntity<List<LobbyEntity>> getActiveLobbies() {
+        return ResponseEntity.ok(lobbyService.getActiveLobbies());
+    }
+
+    record LobbyCreationResponse(String lobbyId, String message) {}
 }

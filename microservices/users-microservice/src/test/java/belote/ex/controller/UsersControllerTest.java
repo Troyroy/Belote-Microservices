@@ -6,7 +6,7 @@ import belote.ex.config.security.token.AccessTokenDecoder;
 import belote.ex.config.security.token.AccessTokenEncoder;
 import belote.ex.domain.*;
 import belote.ex.persistance.entity.UserEntity;
-import belote.ex.persistance.UsersRepository;
+import belote.ex.persistance.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

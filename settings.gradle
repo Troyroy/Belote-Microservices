@@ -1,2 +1,10 @@
 rootProject.name = 'Belote'
 
+include 'microservices:game-microservice'
+include 'microservices:users-microservice'
+include 'microservices:lobby-microservice'
+
+include 'shared:common-events'
+include 'shared:common-models'
+
+

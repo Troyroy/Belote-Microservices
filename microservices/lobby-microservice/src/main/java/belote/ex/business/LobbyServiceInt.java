@@ -1,13 +1,18 @@
 package belote.ex.business;
 
 import belote.ex.persistance.entity.LobbyEntity;
-import belote.ex.persistance.entity.UserEntity;
+
+import java.util.List;
 
 public interface LobbyServiceInt {
-     int createLobby(UserEntity user);
 
-     void joinLobby(UserEntity user, int lobbyID);
-     LobbyEntity getLobby(int id);
+     public String createLobby(String lobbyName, String hostId, String gameMode);
+     boolean joinLobby(String lobbyId, Integer playerId);
+     boolean leaveLobby(String lobbyId, Integer playerId);
+     void startGame(String lobbyId);
 
-     void deleteLobby(int id);
+     LobbyEntity getLobby(String lobbyId);
+
+     List<LobbyEntity> getActiveLobbies();
+
 }
