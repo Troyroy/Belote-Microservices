@@ -1,4 +1,4 @@
-rootProject.name = 'Belote'
+rootProject.name = 'Belote-Microservices'
 
 include 'microservices:games-microservice'
 include 'microservices:users-microservice'
