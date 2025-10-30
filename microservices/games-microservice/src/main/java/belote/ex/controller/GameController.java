@@ -1,6 +1,7 @@
 package belote.ex.controller;
 
 import belote.ex.business.GameServiceInt;
+import belote.ex.business.imp.GameStateService;
 import belote.ex.persistance.entity.GameEntity;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,7 +22,7 @@ import java.text.MessageFormat;
 
 public class GameController {
     GameServiceInt gameService;
-
+    GameStateService gameStateService;
     private final SimpMessagingTemplate messagingTemplate;
 
 
@@ -62,6 +63,19 @@ public class GameController {
         return ResponseEntity.ok(gameService.getGame(id));
     }
 
+    @PostMapping("{lobbyID}")
+    public ResponseEntity<GameEntity> createGame(@PathVariable int lobbyID) throws JsonProcessingException {
+
+
+        //int id = gameStateService.createGame(lobbyService.getLobby(lobbyID));
+        gameService.startRound("1");
+        var mapper = new ObjectMapper();
+        String lobbyTo = MessageFormat.format("/lobby/{0}", lobbyID);
+        String gameTO = MessageFormat.format("/game/{0}", 1);
+        messagingTemplate.convertAndSend(lobbyTo," \"id\":connect ");
+        messagingTemplate.convertAndSend(gameTO, mapper.writeValueAsString(gameService.getGame("1")));
+        return ResponseEntity.ok(gameService.getGame("1"));
+    }
 
    @PostMapping("{id}/{cardID}")
     public ResponseEntity<GameEntity> playCard(@PathVariable String id, @PathVariable int cardID/*@PathVariable int playerID*/) throws JsonProcessingException {
