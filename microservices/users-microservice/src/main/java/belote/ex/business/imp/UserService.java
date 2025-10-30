@@ -2,14 +2,15 @@ package belote.ex.business.imp;
 
 import belote.ex.business.UserServiceInt;
 import belote.ex.business.exceptions.NotFoundException;
-import belote.ex.config.security.token.AccessTokenEncoder;
-import belote.ex.config.security.token.impl.AccessTokenImpl;
+
 import belote.ex.domain.*;
 import belote.ex.persistance.UserRepository;
 import belote.ex.persistance.entity.UserEntity;
 import lombok.AllArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import token.AccessTokenEncoder;
+import token.impl.AccessTokenImpl;
 
 import java.util.IllegalFormatCodePointException;
 import java.util.List;

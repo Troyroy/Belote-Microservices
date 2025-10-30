@@ -1,4 +1,4 @@
-package belote.ex.config.security.auth;
+package belote.ex.config.auth;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

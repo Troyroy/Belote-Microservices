@@ -1,4 +1,4 @@
-package belote.ex.config.security.auth;
+package belote.ex.config.auth;
 
 
 import belote.ex.exception.InvalidAccessTokenException;

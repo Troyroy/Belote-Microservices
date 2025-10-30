@@ -1,10 +1,8 @@
-package belote.ex.config.security.token.impl;
+package belote.ex.config;
 
 
-import belote.ex.config.security.token.AccessToken;
-import belote.ex.config.security.token.AccessTokenDecoder;
-import belote.ex.config.security.token.AccessTokenEncoder;
-import belote.ex.config.security.token.exception.InvalidAccessTokenException;
+
+import belote.ex.exception.InvalidAccessTokenException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.JwtException;
@@ -13,14 +11,16 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
+import token.AccessToken;
+import token.AccessTokenDecoder;
+import token.AccessTokenEncoder;
+import token.impl.AccessTokenImpl;
 
 import java.security.Key;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Service

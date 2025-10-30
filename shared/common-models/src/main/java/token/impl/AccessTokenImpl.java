@@ -1,13 +1,10 @@
-package belote.ex.config.security.token.impl;
+package token.impl;
 
-import belote.ex.config.security.token.AccessToken;
+
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
+import token.AccessToken;
 
 @EqualsAndHashCode
 @Getter

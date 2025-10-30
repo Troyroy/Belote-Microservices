@@ -1,7 +1,8 @@
-package belote.ex.config.security.token.exception;
+package belote.ex.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
+
 
 public class InvalidAccessTokenException extends ResponseStatusException {
     public InvalidAccessTokenException(String errorCause) {

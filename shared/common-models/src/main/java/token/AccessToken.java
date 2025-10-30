@@ -1,4 +1,4 @@
-package belote.ex.config.security.token;
+package token;
 
 
 public interface AccessToken {

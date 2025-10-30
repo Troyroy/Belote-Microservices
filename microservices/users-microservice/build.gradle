@@ -3,6 +3,8 @@ plugins {
 }
 
 dependencies {
+    implementation project(':shared:common-events')
+    implementation project(':shared:common-models')
     // User service specific dependencies
     implementation 'org.flywaydb:flyway-mysql'
     implementation 'mysql:mysql-connector-java:8.0.33'

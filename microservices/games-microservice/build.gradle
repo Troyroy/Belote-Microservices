@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    // Game service specific dependencies
+    implementation project(':shared:common-models')
     implementation project(':shared:common-events')
     // If you want Redis cache support
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'

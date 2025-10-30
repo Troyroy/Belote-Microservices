@@ -1,6 +1,7 @@
-package belote.ex.config.security;
+package belote.ex.config;
 
-import belote.ex.config.security.auth.AuthenticationRequestFilter;
+
+import belote.ex.config.auth.AuthenticationRequestFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -37,8 +38,9 @@ public class WebSecurityConfig {
                         configurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(registry ->
                         registry.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                                .requestMatchers(HttpMethod.POST, "/users/**").permitAll()
-                                .requestMatchers(HttpMethod.GET, "/users/**").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/games/**").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/games/**").permitAll()
+                                .requestMatchers("/ws/**").permitAll()
                                 .requestMatchers(SWAGGER_UI_RESOURCES).permitAll()
                                 .anyRequest().authenticated()
                 )
