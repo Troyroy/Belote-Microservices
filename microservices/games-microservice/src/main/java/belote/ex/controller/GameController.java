@@ -2,9 +2,11 @@ package belote.ex.controller;
 
 import belote.ex.business.GameServiceInt;
 import belote.ex.business.imp.GameStateService;
+import belote.ex.events.LobbyReadyEvent;
 import belote.ex.persistance.entity.GameEntity;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -63,18 +65,18 @@ public class GameController {
         return ResponseEntity.ok(gameService.getGame(id));
     }
 
-    @PostMapping("{lobbyID}")
-    public ResponseEntity<GameEntity> createGame(@PathVariable int lobbyID) throws JsonProcessingException {
+    @PostMapping()
+    public ResponseEntity<GameEntity> createGame(@RequestBody @Valid LobbyReadyEvent lobby) throws JsonProcessingException {
 
 
-        //int id = gameStateService.createGame(lobbyService.getLobby(lobbyID));
-        gameService.startRound("1");
+        String id = gameService.createGameFromLobby(lobby);
+        gameService.startRound(id);
         var mapper = new ObjectMapper();
-        String lobbyTo = MessageFormat.format("/lobby/{0}", lobbyID);
-        String gameTO = MessageFormat.format("/game/{0}", 1);
+        String lobbyTo = MessageFormat.format("/lobby/{0}", id);
+        String gameTO = MessageFormat.format("/game/{0}", id);
         messagingTemplate.convertAndSend(lobbyTo," \"id\":connect ");
-        messagingTemplate.convertAndSend(gameTO, mapper.writeValueAsString(gameService.getGame("1")));
-        return ResponseEntity.ok(gameService.getGame("1"));
+        messagingTemplate.convertAndSend(gameTO, mapper.writeValueAsString(gameService.getGame(id)));
+        return ResponseEntity.ok(gameService.getGame(id));
     }
 
    @PostMapping("{id}/{cardID}")

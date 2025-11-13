@@ -18,7 +18,7 @@ COPY microservices/users-microservice ./microservices/users-microservice
 RUN gradle :microservices:users-microservice:bootJar --no-daemon
 
 # Runtime stage
-FROM openjdk:17-jdk-alpine
+FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /opt/app
 

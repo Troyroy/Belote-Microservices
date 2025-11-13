@@ -18,7 +18,7 @@ COPY microservices/lobby-microservice ./microservices/lobby-microservice
 RUN gradle :microservices:lobby-microservice:bootJar --no-daemon
 
 # Runtime stage
-FROM openjdk:17-jdk-alpine
+FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /opt/app
 

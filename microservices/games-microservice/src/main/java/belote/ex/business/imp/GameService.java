@@ -34,25 +34,25 @@ public class GameService implements GameServiceInt {
     public String createGameFromLobby(LobbyReadyEvent event) {
         log.info("Creating game from lobby: {}", event.getLobbyId());
 
-        // Fetch user details from User Service
-        List<UserEntity> players = new ArrayList<>();
-        for (Integer playerId : event.getPlayerIds()) {
-            try {
-                UserEntity user = restTemplate.getForObject(
-                        USER_SERVICE_URL + "/" + playerId,
-                        UserEntity.class
-                );
-                if (user != null) {
-                    players.add(user);
-                }
-            } catch (Exception e) {
-                log.error("Error fetching user {}", playerId, e);
-            }
-        }
+//        // Fetch user details from User Service
+//        List<UserEntity> players = new ArrayList<>();
+//        for (Integer playerId : event.getPlayerIds()) {
+//            try {
+//                UserEntity user = restTemplate.getForObject(
+//                        USER_SERVICE_URL + "/" + playerId,
+//                        UserEntity.class
+//                );
+//                if (user != null) {
+//                    players.add(user);
+//                }
+//            } catch (Exception e) {
+//                log.error("Error fetching user {}", playerId, e);
+//            }
+//        }
 
-        if (players.size() != event.getPlayerIds().size()) {
-            throw new IllegalStateException("Could not fetch all players");
-        }
+//        if (players.size() != event.getPlayerIds().size()) {
+//            throw new IllegalStateException("Could not fetch all players");
+//        }
 
         // Create game with lobby metadata
         GameEntity game = createGame(event.getPlayerIds());
@@ -389,51 +389,22 @@ public class GameService implements GameServiceInt {
     public GameEntity createGame(List<Integer> lobbyPlayerIDs) {
 
         List<CardEntity> deckOfCards = new ArrayList<>();
-
         String[] suits = {"Diamonds", "Clubs", "Hearts", "Spades"};
         String[] ranks = {"King", "Queen", "Jack", "Ten", "Nine", "Eight", "Seven", "Ace"};
+        int[] points = {4, 3, 20, 10, 14, 0, -1, 11}; // Corresponding to ranks
 
-        deckOfCards.set(0, (CardEntity.builder().id(0).points(11).rank(ranks[7]).suit(suits[0]).build()));
-        deckOfCards.set(1, (CardEntity.builder().id(1).points(4).rank(ranks[0]).suit(suits[0]).build()));
-        deckOfCards.set(2, (CardEntity.builder().id(2).points(3).rank(ranks[1]).suit(suits[0]).build()));
-        deckOfCards.set(3, (CardEntity.builder().id(3).points(20).rank(ranks[2]).suit(suits[0]).build()));
-        deckOfCards.set(4, (CardEntity.builder().id(4).points(10).rank(ranks[3]).suit(suits[0]).build()));
-        deckOfCards.set(5, (CardEntity.builder().id(5).points(14).rank(ranks[4]).suit(suits[0]).build()));
-        deckOfCards.set(6, (CardEntity.builder().id(6).points(0).rank(ranks[5]).suit(suits[0]).build()));
-        deckOfCards.set(7, (CardEntity.builder().id(7).points(-1).rank(ranks[6]).suit(suits[0]).build()));
-
-        deckOfCards.set(8, (CardEntity.builder().id(8).points(11).rank(ranks[7]).suit(suits[1]).build()));
-        deckOfCards.set(9, (CardEntity.builder().id(9).points(4).rank(ranks[0]).suit(suits[1]).build()));
-        deckOfCards.set(10, (CardEntity.builder().id(10).points(3).rank(ranks[1]).suit(suits[1]).build()));
-        deckOfCards.set(11, (CardEntity.builder().id(11).points(20).rank(ranks[2]).suit(suits[1]).build()));
-        deckOfCards.set(12, (CardEntity.builder().id(12).points(10).rank(ranks[3]).suit(suits[1]).build()));
-        deckOfCards.set(13, (CardEntity.builder().id(13).points(14).rank(ranks[4]).suit(suits[1]).build()));
-        deckOfCards.set(14, (CardEntity.builder().id(14).points(0).rank(ranks[5]).suit(suits[1]).build()));
-        deckOfCards.set(15, (CardEntity.builder().id(15).points(-1).rank(ranks[6]).suit(suits[1]).build()));
-
-
-        deckOfCards.set(16, (CardEntity.builder().id(16).points(11).rank(ranks[7]).suit(suits[2]).build()));
-        deckOfCards.set(17, (CardEntity.builder().id(17).points(4).rank(ranks[0]).suit(suits[2]).build()));
-        deckOfCards.set(18, (CardEntity.builder().id(18).points(3).rank(ranks[1]).suit(suits[2]).build()));
-        deckOfCards.set(19, (CardEntity.builder().id(19).points(20).rank(ranks[2]).suit(suits[2]).build()));
-        deckOfCards.set(20, (CardEntity.builder().id(20).points(10).rank(ranks[3]).suit(suits[2]).build()));
-        deckOfCards.set(21, (CardEntity.builder().id(21).points(14).rank(ranks[4]).suit(suits[2]).build()));
-        deckOfCards.set(22, (CardEntity.builder().id(22).points(0).rank(ranks[5]).suit(suits[2]).build()));
-        deckOfCards.set(23, (CardEntity.builder().id(23).points(-1).rank(ranks[6]).suit(suits[2]).build()));
-
-
-        deckOfCards.set(24, (CardEntity.builder().id(24).points(11).rank(ranks[7]).suit(suits[3]).build()));
-        deckOfCards.set(25, (CardEntity.builder().id(25).points(4).rank(ranks[0]).suit(suits[3]).build()));
-        deckOfCards.set(26, (CardEntity.builder().id(26).points(3).rank(ranks[1]).suit(suits[3]).build()));
-        deckOfCards.set(27, (CardEntity.builder().id(27).points(20).rank(ranks[2]).suit(suits[3]).build()));
-        deckOfCards.set(28, (CardEntity.builder().id(28).points(10).rank(ranks[3]).suit(suits[3]).build()));
-        deckOfCards.set(29, (CardEntity.builder().id(29).points(14).rank(ranks[4]).suit(suits[3]).build()));
-        deckOfCards.set(30, (CardEntity.builder().id(30).points(0).rank(ranks[5]).suit(suits[3]).build()));
-        deckOfCards.set(31, (CardEntity.builder().id(31).points(-1).rank(ranks[6]).suit(suits[3]).build()));
-
-
-
-
+        int cardId = 0;
+        for (String suit : suits) {
+            for (int i = 0; i < ranks.length; i++) {
+                deckOfCards.add(CardEntity.builder()
+                        .id(cardId++)
+                        .points(points[i])
+                        .rank(ranks[i])
+                        .suit(suit)
+                        .build());
+            }
+        }
+        // ... rest of your code remains the same
         HashMap<Integer, Integer> playerIDs = new HashMap<>();
 
 

@@ -13,5 +13,5 @@ import java.util.List;
 public class LobbyReadyEvent implements Serializable {
     private String lobbyId;
     private List<Integer> playerIds;
-    private Long timestamp;
+    //private Long timestamp;
 }

@@ -42,6 +42,7 @@ public class WebSecurityConfig {
                                 .requestMatchers(HttpMethod.GET, "/games/**").permitAll()
                                 .requestMatchers("/ws/**").permitAll()
                                 .requestMatchers(SWAGGER_UI_RESOURCES).permitAll()
+                                .requestMatchers("/actuator/**").permitAll()
                                 .anyRequest().authenticated()
                 )
                 .exceptionHandling(configure -> configure.authenticationEntryPoint(authenticationEntryPoint))

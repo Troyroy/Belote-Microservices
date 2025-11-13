@@ -18,7 +18,7 @@ COPY microservices/games-microservice ./microservices/games-microservice
 RUN gradle :microservices:games-microservice:bootJar --no-daemon
 
 # Runtime stage
-FROM openjdk:17-jdk-alpine
+FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /opt/app
 

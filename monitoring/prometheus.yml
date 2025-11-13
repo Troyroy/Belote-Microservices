@@ -1,0 +1,28 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'users-microservice'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['users-microservice:8080']
+        labels:
+          application: 'users-microservice'
+          environment: 'docker'
+
+  - job_name: 'games-microservice'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['games-microservice:8080']
+        labels:
+          application: 'games-microservice'
+          environment: 'docker'
+
+  - job_name: 'lobby-microservice'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['lobby-microservice:8080']
+        labels:
+          application: 'lobby-microservice'
+          environment: 'docker'

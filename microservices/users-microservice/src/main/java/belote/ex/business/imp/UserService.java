@@ -6,6 +6,7 @@ import belote.ex.business.exceptions.NotFoundException;
 import belote.ex.domain.*;
 import belote.ex.persistance.UserRepository;
 import belote.ex.persistance.entity.UserEntity;
+import io.micrometer.core.instrument.Counter;
 import lombok.AllArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ public class UserService implements UserServiceInt {
     private UserRepository repository;
     private final PasswordEncoder passwordEncoder;
     private final AccessTokenEncoder accessTokenEncoder;
+    private final Counter loginCounter;
 
     @Override
     public GetAllUsersResponse getAllUsers() {
@@ -90,7 +92,10 @@ public class UserService implements UserServiceInt {
         UserEntity user2 = repository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("No matching credentials"));
 
+
+        loginCounter.increment();
         String token = generateAccessToken(user2);
+
 
         return LoginResponce.builder()
                 .id(user2.getId())

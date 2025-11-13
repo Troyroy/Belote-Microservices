@@ -86,8 +86,8 @@ public class LobbyService implements LobbyServiceInt {
         // Create and publish event
         LobbyReadyEvent event = new LobbyReadyEvent(
                 lobbyId,
-                lobby.getPlayerIds(),
-                System.currentTimeMillis()
+                lobby.getPlayerIds()
+                //System.currentTimeMillis()
         );
 
         // Publish event to Redis for game service

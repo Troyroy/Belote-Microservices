@@ -40,6 +40,7 @@ public class WebSecurityConfig {
                                 .requestMatchers(HttpMethod.POST, "/users/**").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/users/**").permitAll()
                                 .requestMatchers(SWAGGER_UI_RESOURCES).permitAll()
+                                .requestMatchers("/actuator/**").permitAll()
                                 .anyRequest().authenticated()
                 )
                 .exceptionHandling(configure -> configure.authenticationEntryPoint(authenticationEntryPoint))
