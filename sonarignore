@@ -1,0 +1,64 @@
+# SonarQube Ignore File
+# Files and directories listed here will be excluded from SonarQube analysis
+
+# Test files
+**/*Test.java
+**/*Tests.java
+**/test/**
+**/tests/**
+src/test/**
+
+# Config
+**/config/**
+**/configuration/**
+**/*Config.java
+**/*Configuration.java
+
+
+# Generated files
+**/target/**
+**/build/**
+**/bin/**
+**/out/**
+
+# Dependencies
+**/node_modules/**
+**/vendor/**
+
+# IDE files
+**/.idea/**
+**/.vscode/**
+**/*.iml
+**/.settings/**
+**/.project
+**/.classpath
+
+# Build outputs
+**/*.class
+**/*.jar
+**/*.war
+**/*.ear
+
+# Logs
+**/*.log
+
+# Temporary files
+**/*.tmp
+**/*.temp
+**/.DS_Store
+**/Thumbs.db
+
+# Coverage reports
+**/coverage/**
+**/.coverage
+**/htmlcov/**
+
+# Documentation
+**/docs/**
+**/*.md
+
+# Configuration files (optional - uncomment if needed)
+# **/*.yml
+# **/*.yaml
+# **/*.xml
+# **/*.properties
