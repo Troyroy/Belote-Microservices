@@ -515,9 +515,6 @@ public class GameService implements GameServiceInt {
         );
     }
 
-    /**
-     * Notify lobby members that game is ready
-     */
     private void notifyGameReady(String gameId, GameEntity game) {
         messagingTemplate.convertAndSend(
                 "/topic/game/" + gameId,

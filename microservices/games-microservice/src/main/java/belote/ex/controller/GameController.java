@@ -78,23 +78,6 @@ public class GameController {
         return ResponseEntity.ok(gameServiceInt.getGame(id));
     }
 
-//    @PostMapping("/{id}/{cardID}")
-//    public ResponseEntity<GameEntity> playCard(
-//            @PathVariable String id,
-//            @PathVariable int cardID,
-//            @AuthenticationPrincipal Jwt jwt) throws JsonProcessingException {
-//
-//        log.info("Play card request - Game: {}, Card: {}, User: {}", id, cardID, jwt.getSubject());
-//
-//        GameEntity game = gameStateService.getGame(id);
-//        gameServiceInt.playCard(1, cardID, game, 1500);
-//
-//        var mapper = new ObjectMapper();
-//        String lobbyTo = MessageFormat.format("/game/{0}", id);
-//        messagingTemplate.convertAndSend(lobbyTo, mapper.writeValueAsString(gameServiceInt.getGame(id)));
-//
-//        return ResponseEntity.ok(gameServiceInt.getGame(id));
-//    }
 
     @PostMapping("/{id}/{cardID}")
     public ResponseEntity<GameEntity> playCard(
