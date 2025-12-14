@@ -1,6 +1,8 @@
 package belote.ex.messaging;
 
 
+import belote.ex.business.GameServiceInt;
+import belote.ex.business.GameStateServiceInt;
 import belote.ex.business.imp.GameService;
 import belote.ex.business.imp.GameStateService;
 import belote.ex.events.GameCreatedEvent;
@@ -14,15 +16,28 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class GameEventListener {
 
-    private final GameService gameService;
-    private final GameStateService gameStateService;
+    private final GameServiceInt gameService;
+    private final GameStateServiceInt gameStateService;
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
     private final SimpMessagingTemplate messagingTemplate;
+
+    public GameEventListener(
+            GameServiceInt gameService,
+            GameStateServiceInt gameStateService,
+            RedisTemplate<String, Object> redisTemplate,
+            ObjectMapper objectMapper,
+            SimpMessagingTemplate messagingTemplate) {
+
+        this.gameService = gameService;
+        this.gameStateService = gameStateService;
+        this.redisTemplate = redisTemplate;
+        this.objectMapper = objectMapper;
+        this.messagingTemplate = messagingTemplate;
+    }
 
     private static final String GAME_EVENTS_CHANNEL = "game:events";
     private static final String LOBBY_WS_PREFIX = "/topic/lobby/";

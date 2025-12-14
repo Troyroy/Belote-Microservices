@@ -29,19 +29,15 @@ public class LobbyEntity implements Serializable {
     public LobbyEntity(String id, String hostId) {
         this.id = id;
         this.hostId = hostId;
-        this.playerIds = new ArrayList<>();
+            this.playerIds = new ArrayList<>();
         this.maxPlayers = 4;
         this.createdAt = System.currentTimeMillis();
         this.updatedAt = System.currentTimeMillis();
     }
 
-    public boolean isFull() {
-        return playerIds.size() >= maxPlayers;
-    }
-
 
     public void addPlayer(Integer playerId) {
-        if (!playerIds.contains(playerId) && !isFull()) {
+        if (!playerIds.contains(playerId) && playerIds.size() < 4) {
             playerIds.add(playerId);
             updatedAt = System.currentTimeMillis();
         }

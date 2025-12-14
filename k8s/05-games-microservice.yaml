@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: games-microservice
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: games-microservice
+  template:
+    metadata:
+      labels:
+        app: games-microservice
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/actuator/prometheus"
+    spec:
+      containers:
+        - name: games-microservice
+          image: games-microservice:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "docker"
+            - name: GAME_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: GAMES_DB_URL
+            - name: GAME_DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: GAMES_DB_USERNAME
+            - name: GAME_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: GAMES_DB_PASSWORD
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: JWT_SECRET
+            - name: REDIS_HOST
+              value: "redis"
+            - name: REDIS_PORT
+              value: "6379"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: games-microservice
+  namespace: microservices
+spec:
+  selector:
+    app: games-microservice
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP

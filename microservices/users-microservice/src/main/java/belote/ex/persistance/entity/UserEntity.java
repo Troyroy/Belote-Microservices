@@ -24,13 +24,14 @@ public class UserEntity {
     private int id;
 
     @NotBlank
+    @Column(name = "keycloak_id", unique = true, nullable = false, length = 36)
+    private String keycloakId;
+
+    @NotBlank
     @Length(min = 2 ,max = 20)
     @Column(name = "username")
     private String username;
 
-    @NotBlank
-    @Column(name = "password")
-    private String password;
 
     @NotBlank
     @Email

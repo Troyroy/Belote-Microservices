@@ -1,15 +1,14 @@
 package belote.ex.business;
 
 import belote.ex.domain.*;
+import belote.ex.persistance.entity.UserEntity;
+import org.springframework.transaction.annotation.Transactional;
 
 public interface UserServiceInt {
-    GetAllUsersResponse getAllUsers();
-    GetUserResponse getUser(int id);
-    CreateUserResponce addUser(CreateUserRequest user);
-    void deleteUser(int id);
+    public UserEntity getUserByKeycloakId(String keycloakId);
 
-    void updateUser(int id, String username);
+    public UserEntity getUserById(Integer id);
 
-    LoginResponce loginUser(String username, String password);
+    public UserEntity createOrUpdateUser(String keycloakId, String username, String email);
 
 }

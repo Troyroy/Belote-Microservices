@@ -10,11 +10,12 @@ import java.util.List;
 public interface GameServiceInt {
 
     public String createGameFromLobby(LobbyReadyEvent event);
-    List<CardEntity> getDeck(String id);
+    List<CardEntity> getDeck(GameEntity game);
 
-     GameEntity getGame(String id);
+     GameEntity getGame(String gameID);
+     void playCard(int id, int cardID,GameEntity game,int milSeconds);
 
-     void playCard(int id, int cardID,String gameID,int milSeconds);
+     void playCardAsync(int id, int cardID,GameEntity game,int milSeconds);
 
-     void startRound(String gameID);
+     void startRound(GameEntity game);
 }

@@ -10,16 +10,21 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.security.SecureRandom;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+
 @Service
 @AllArgsConstructor
 public class GameService implements GameServiceInt {
@@ -56,8 +61,20 @@ public class GameService implements GameServiceInt {
 
         // Create game with lobby metadata
         GameEntity game = createGame(event.getPlayerIds());
-        String gameId = gameStateService.createGame(game);
+        String gameId = gameStateService.createGame(game, event.getLobbyId());
 
+
+        startRound(gameStateService.getGame(gameId));
+        var mapper = new ObjectMapper();
+        String lobbyTo = MessageFormat.format("/lobby/{0}", event.getLobbyId());
+        String gameTO = MessageFormat.format("/game/{0}", event.getLobbyId());
+        messagingTemplate.convertAndSend(lobbyTo, " \"id\":connect ");
+        try {
+            messagingTemplate.convertAndSend(gameTO, mapper.writeValueAsString(getGame(gameId)));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        //messagingTemplate.convertAndSend(gameTO, mapper.writeValueAsString(gameService.getGame(id)));
         log.info("Created game {} from lobby {}", gameId, event.getLobbyId());
         return gameId;
     }
@@ -69,33 +86,34 @@ public class GameService implements GameServiceInt {
         return game;
     }
 
-    public void startRound(String gameID){
+    public void startRound(GameEntity game){
         AtomicInteger cardNumber = new AtomicInteger(0);
 
-        GameEntity game = gameStateService.getGame(gameID);
-        this.shuffleDeck(gameID);
 
-        this.dealCards(gameID,cardNumber,3);
-        this.dealCards(gameID,cardNumber,2);
-        this.dealCards(gameID,cardNumber,3);
+        this.shuffleDeck(game);
+        log.info("Shuffled cards for game: {}", game.getId());
+        this.dealCards(game,cardNumber,3);
+        this.dealCards(game,cardNumber,2);
+        this.dealCards(game,cardNumber,3);
 
         List<CardEntity> list = new ArrayList<>();
         game.setDeck(list);
-        this.askPlayerForACard(game.getOrder().getFirst(),gameID);
+        log.info("Finished setting game: {}", game.getId());
+        gameStateService.saveGame(game);
+        this.askPlayerForACard(game.getOrder().getFirst(),game);
 
     }
 
-    public void shuffleDeck(String gameId) {
-        GameEntity game = gameStateService.getGame(gameId);
+    public void shuffleDeck(GameEntity game) {
 
         if (game == null) {
-            throw new IllegalArgumentException("Game not found: " + gameId);
+            throw new IllegalArgumentException("Game not found: " + game);
         }
 
         List<CardEntity> deck = game.getDeck();
 
         if (deck == null || deck.isEmpty()) {
-            log.warn("Cannot shuffle empty or null deck for game: {}", gameId);
+            log.warn("Cannot shuffle empty or null deck for game: {}", game);
             return;
         }
 
@@ -104,7 +122,7 @@ public class GameService implements GameServiceInt {
 
         gameStateService.saveGame(game);
 
-        log.debug("Shuffled deck for game: {} using SecureRandom", gameId);
+        log.debug("Shuffled deck for game: {} using SecureRandom", game);
     }
 
     @Override
@@ -113,44 +131,44 @@ public class GameService implements GameServiceInt {
     }
 
     @Override
-    public List<CardEntity> getDeck(String id) {
-        GameEntity game = getGame(id);
+    public List<CardEntity> getDeck(GameEntity game) {
+
         List<CardEntity> deckOfCards =  game.getDeck();
         return deckOfCards;
     }
 
 
 
-    public void setFirstPlayer2(int times, String gameID)
+    public void setFirstPlayer2(int times, GameEntity game)
     {
-        GameEntity game = gameStateService.getGame(gameID);
         for(int x =0; x < times; x++) {
             game.getOrder().addLast(game.getOrder().getFirst());
             game.getOrder().removeFirst();
         }
     }
 
-    public void nextPlayer(String gameID) {
-        GameEntity game =gameStateService.getGame(gameID);
+    public void nextPlayer(GameEntity game) {
+
         game.getOrder().addLast(game.getOrder().getFirst());
         game.getOrder().removeFirst();
     }
 
 
 
-    public void dealCards(String gameID, AtomicInteger cardInDeckId, int numberOfCards) {
+    public void dealCards(GameEntity game, AtomicInteger cardInDeckId, int numberOfCards) {
 
-        GameEntity game =gameStateService.getGame(gameID);
+
         List<CardEntity> deck = game.getDeck();
 
         for (int i=0; i < 4; i++) {
             List<CardEntity> hand = game.getHands().get(game.getOrder().getFirst());
-            nextPlayer(gameID);
+            nextPlayer(game);
             for (int s=0; s < numberOfCards; s++) {
                 hand.add(deck.get(cardInDeckId.get()));
                 cardInDeckId.incrementAndGet();
             }
         }
+        gameStateService.saveGame(game);
 
     }
 
@@ -175,8 +193,7 @@ public class GameService implements GameServiceInt {
 
     }
 
-    public void playCard(int playerID, int playedCard,String gameID,int seconds){
-        GameEntity game =gameStateService.getGame(gameID);
+    public void playCard(int playerID, int playedCard,GameEntity game,int seconds){
 
 
             List<CardEntity> hand = game.getHands().get(game.getOrder().getFirst());
@@ -198,34 +215,85 @@ public class GameService implements GameServiceInt {
                     game.setCardToAnswer(card);
                 }
             }
-
+            gameStateService.saveGame(game);
 
             List<CardEntity> bucket = game.getBucket();
             bucket.add(card);
 
-            String to = "/game/" + gameID;
-            messagingTemplate.convertAndSend(to, game);
+            //String to = "/game/" + game.getId();
+            notifyGameUpdate(game.getId(),game);
+            //messagingTemplate.convertAndSend(to, game);
 
             try {
                 Thread.sleep(seconds);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
-            nextPlayer(gameID);
+            nextPlayer(game);
 
             if (bucket.indexOf(card) == 3) {
-                this.endBucket(gameID);
-            } else {
-                askPlayerForACard(game.getOrder().getFirst(), gameID);
-            }
-    }
-    public void endRound(String gameID){
-        GameEntity game =gameStateService.getGame(gameID);
+                this.endBucket(game);
 
-        this.calculateScores(gameID);
+            } else {
+                askPlayerForACard(game.getOrder().getFirst(), game);
+            }
+            gameStateService.saveGame(game);
+    }
+
+    @Async
+    public void playCardAsync(int playerID, int playedCard,GameEntity game,int seconds){
+
+
+        List<CardEntity> hand = game.getHands().get(game.getOrder().getFirst());
+        CardEntity card = hand.stream().filter(x -> playedCard == x.getId()).findFirst().orElse(null);
+
+
+        List<CardEntity> cards = playableCards(game.getHands().get(game.getOrder().getFirst()),game.getCardToAnswer());
+        if(!cards.contains(card))
+        {
+            throw new NotAvaibleException("Not avaible");
+        }
+        CardEntity card1ToAnswer = game.getCardToAnswer();
+        game.getHands().get(game.getOrder().getFirst()).remove(card);
+        if (game.getCardToAnswer() == null) {
+            game.setCardToAnswer(card);
+        } else {
+            assert card != null;
+            if (card1ToAnswer.getSuit().equals(card.getSuit()) && card1ToAnswer.getPoints() < card.getPoints()) {
+                game.setCardToAnswer(card);
+            }
+        }
+        gameStateService.saveGame(game);
+
+        List<CardEntity> bucket = game.getBucket();
+        bucket.add(card);
+
+        //String to = "/game/" + game.getId();
+        notifyGameUpdate(game.getId(),game);
+        //messagingTemplate.convertAndSend(to, game);
+
+        try {
+            Thread.sleep(seconds);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        nextPlayer(game);
+
+        if (bucket.indexOf(card) == 3) {
+            this.endBucket(game);
+
+        } else {
+            askPlayerForACard(game.getOrder().getFirst(), game);
+        }
+        gameStateService.saveGame(game);
+    }
+    public void endRound(GameEntity game){
+
+        log.info("Ending round for game: {}", game.getId());
+        this.calculateScores(game);
 
         if (game.getScores().get(1) > 9 || game.getScores().get(0) >9){
-            endGame(gameID);
+            endGame(game);
         }
         else {
 
@@ -245,40 +313,37 @@ public class GameService implements GameServiceInt {
             game.getThisRoundCards().get(0).clear();
 
 
-        this.setFirstPlayer2(game.getFirstPlayerRound(),gameID);
-        this.startRound(gameID);
+        this.setFirstPlayer2(game.getFirstPlayerRound(),game);
+        this.startRound(game);
+        gameStateService.saveGame(game);
         }
     }
 
 
-    public void  endGame(String gameID)  {
-        GameEntity game =gameStateService.getGame(gameID);
+    public void  endGame(GameEntity game)  {
 
-
+        log.info("Ending game: {}", game.getId());
         int winner;
         Integer[] ids = new Integer[4];
+
         for(int i = 1; i <= 4; i++) {
-            int newID = game.getPlayers().get(i);
-            if (newID > 0) {
-                ids[i-1] = (game.getPlayers().get(i));
-            }
-            else {
+            Integer newID = game.getPlayers().get(i);
+
+            if (newID != null && newID > 0) {
+                ids[i-1] = newID;
+            } else {
                 ids[i-1] = null;
             }
-
         }
-
 
         if(game.getScores().get(0) < game.getScores().get(1)) {
             winner = 1;
-        }
-        else {
+        } else {
             winner = 2;
         }
 
-
         GameScoreEntity scores = GameScoreEntity.builder()
-                .id(gameID)
+                .id(game.getId())
                 .player1(ids[0])
                 .player2(ids[1])
                 .player3(ids[2])
@@ -287,19 +352,17 @@ public class GameService implements GameServiceInt {
                 .team2Score(game.getScores().get(0))
                 .winnerTeam(winner)
                 .build();
-
         // Add permanent storage
         // scoresRepository.save(scores);
 
         gameScoresRepository.save(scores);
-        gameStateService.deleteGame(gameID);
+        gameStateService.deleteGame(game.getId());
 
-        String to = "/game/" + gameID;
-        messagingTemplate.convertAndSend(to, scores);
+
+        notifyGameEnd(game.getId(),game);
     }
 
-    public void calculateScores(String gameID){
-        GameEntity game =gameStateService.getGame(gameID);
+    public void calculateScores(GameEntity game){
         List<CardEntity> team1 = game.getThisRoundCards().get(0);
 
         int team1Scores = 0;
@@ -331,10 +394,9 @@ public class GameService implements GameServiceInt {
 
     }
 
-    public void endBucket(String gameID){
+    public void endBucket(GameEntity game){
+        log.info("Ending bucket for game: {}", game.getId());
 
-
-        GameEntity game = gameStateService.getGame(gameID);
         List<CardEntity> bucket = game.getBucket();
 
         CardEntity card = bucket.stream().filter(x -> x.getSuit().equals(game.getCardToAnswer().getSuit()))
@@ -360,15 +422,17 @@ public class GameService implements GameServiceInt {
 
         if (game.getCurrentBucket() != 8){
 
-        this.setFirstPlayer2(winnerPlayerIndex,gameID);
+        this.setFirstPlayer2(winnerPlayerIndex,game);
             int bucket1 =  game.getCurrentBucket() + 1;
             game.setCurrentBucket(bucket1);
-
-        askPlayerForACard(game.getOrder().getFirst(),gameID);
+            gameStateService.saveGame(game);
+        askPlayerForACard(game.getOrder().getFirst(),game);
         }
         else{
             game.setCurrentBucket(1);
-            endRound(gameID);
+
+            endRound(game);
+            gameStateService.saveGame(game);
         }
 
     }
@@ -376,13 +440,13 @@ public class GameService implements GameServiceInt {
 
 
 
-    public void askPlayerForACard(int playerIDinGame,String  gameID){
-        GameEntity game =gameStateService.getGame(gameID);
+    public void askPlayerForACard(int playerIDinGame,GameEntity  game){
+
        int playerID = game.getPlayers().get(playerIDinGame);
        if (playerID <= 0) {
            List<CardEntity> cards;
            cards = playableCards(game.getHands().get(game.getOrder().getFirst()),game.getCardToAnswer());
-           this.playCard(playerID,cards.get(0).getId(),gameID,1500);
+           this.playCard(playerID,cards.get(0).getId(),game,1500);
        }
     }
 
@@ -441,6 +505,33 @@ public class GameService implements GameServiceInt {
         scores.put(0,0);
         scores.put(1,0);
         String gameId = UUID.randomUUID().toString();
-        return  (GameEntity.builder().id(gameId).players(playerIDs).thisRoundCards(roundCards).bucket(new ArrayList<>()).currentBucket(1).order(order).hands(hands).deck(deckOfCards).firstPlayerBucket(1).firstPlayerRound(1).scores(scores).build());
+        return  (GameEntity.builder().id(gameId).players(playerIDs).thisRoundCards(roundCards).bucket(new ArrayList<>()).currentBucket(1).order(order).hands(hands).deck(deckOfCards).firstPlayerBucket(1).firstPlayerRound(1).scores(scores).status("ACTIVE").build());
     }
+
+    private void notifyGameUpdate(String gameId, GameEntity game) {
+        messagingTemplate.convertAndSend(
+                "/topic/game/" + gameId,
+                new GameUpdateMessage("GAME _UPDATE", game)
+        );
+    }
+
+    /**
+     * Notify lobby members that game is ready
+     */
+    private void notifyGameReady(String gameId, GameEntity game) {
+        messagingTemplate.convertAndSend(
+                "/topic/game/" + gameId,
+                new GameFinishedMessage("GAME_READY", gameId, game)
+        );
+    }
+
+    private void notifyGameEnd(String gameId, GameEntity game) {
+        messagingTemplate.convertAndSend(
+                "/topic/game/" + gameId,
+                new GameFinishedMessage("GAME_END", gameId, game)
+        );
+    }
+
+    record GameUpdateMessage(String type, GameEntity game) {}
+    record GameFinishedMessage(String type, String gameId, GameEntity game) {}
 }

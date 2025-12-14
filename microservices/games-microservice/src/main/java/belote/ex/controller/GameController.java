@@ -1,98 +1,121 @@
 package belote.ex.controller;
 
+import Utils.MetricsMaker;
 import belote.ex.business.GameServiceInt;
-import belote.ex.business.imp.GameStateService;
+import belote.ex.business.GameStateServiceInt;
 import belote.ex.events.LobbyReadyEvent;
 import belote.ex.persistance.entity.GameEntity;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.text.MessageFormat;
 
+@Slf4j
 @RestController
-@RequestMapping( value = "/game")
-@AllArgsConstructor
+@RequestMapping( value = "/games")
+
 
 public class GameController {
-    GameServiceInt gameService;
-    GameStateService gameStateService;
+    private final GameServiceInt gameServiceInt;
+    private final GameStateServiceInt gameStateServiceInt;
     private final SimpMessagingTemplate messagingTemplate;
+    private final MeterRegistry meterRegistry;
 
+    public GameController(
+            GameServiceInt gameServiceInt,
+            GameStateServiceInt gameStateServiceInt,
+            SimpMessagingTemplate messagingTemplate,
+            MeterRegistry meterRegistry) {
 
-    /**
-     * Client subscribes to: /topic/game/{gameId}
-     * Client sends to: /app/game/{gameId}/join
-     */
-//    @MessageMapping("/game/{gameId}/join")
-//    public void joinGame(
-//            @DestinationVariable String gameId,
-//            JoinGameRequest request) {
-//
-//        log.info("Player {} joining game {}", request.getPlayerId(), gameId);
-//
-//        try {
-//            GameEntity game = gameStateService.getGame(gameId);
-//
-//            if (game == null) {
-//                sendError(gameId, "Game not found");
-//                return;
-//            }
-//
-//            // Notify all players that someone joined
-//            messagingTemplate.convertAndSend(
-//                    "/topic/game/" + gameId,
-//                    game
-//            );
-//
-//            log.info("Player {} joined game {} successfully", request.getPlayerId(), gameId);
-//
-//        } catch (Exception e) {
-//            log.error("Error joining game", e);
-//            sendError(gameId, "Failed to join game");
-//        }
-//    }
-    @GetMapping("{id}")
-    public ResponseEntity<GameEntity>getGame(@PathVariable String id) {
-        return ResponseEntity.ok(gameService.getGame(id));
+        this.gameServiceInt = gameServiceInt;
+        this.gameStateServiceInt = gameStateServiceInt;
+        this.messagingTemplate = messagingTemplate;
+        this.meterRegistry = meterRegistry;
+    }
+    @GetMapping("/{id}")
+    public ResponseEntity<GameEntity> getGame(
+            @PathVariable String id,
+            @AuthenticationPrincipal Jwt jwt) {
+
+        log.info("Get game request - ID: {}, User: {}", id, jwt.getSubject());
+        return ResponseEntity.ok(gameServiceInt.getGame(id));
     }
 
-    @PostMapping()
-    public ResponseEntity<GameEntity> createGame(@RequestBody @Valid LobbyReadyEvent lobby) throws JsonProcessingException {
+    @PostMapping
+    public ResponseEntity<GameEntity> createGame(
+            @RequestBody @Valid LobbyReadyEvent lobby,
+            @AuthenticationPrincipal Jwt jwt) throws JsonProcessingException {
 
+        log.info("Create game request - User: {}, Lobby: {}", jwt.getSubject(), lobby);
 
-        String id = gameService.createGameFromLobby(lobby);
-        gameService.startRound(id);
+        String id = gameServiceInt.createGameFromLobby(lobby);
+        MetricsMaker.MetricsCounter("game_count", meterRegistry);
+        GameEntity game = gameStateServiceInt.getGame(id);
+
+        //gameServiceInt.startRound(game);
+
         var mapper = new ObjectMapper();
         String lobbyTo = MessageFormat.format("/lobby/{0}", id);
         String gameTO = MessageFormat.format("/game/{0}", id);
-        messagingTemplate.convertAndSend(lobbyTo," \"id\":connect ");
-        messagingTemplate.convertAndSend(gameTO, mapper.writeValueAsString(gameService.getGame(id)));
-        return ResponseEntity.ok(gameService.getGame(id));
+        messagingTemplate.convertAndSend(lobbyTo, " \"id\":connect ");
+        messagingTemplate.convertAndSend(gameTO, mapper.writeValueAsString(gameServiceInt.getGame(id)));
+
+        log.info("Game created successfully - ID: {}", id);
+        return ResponseEntity.ok(gameServiceInt.getGame(id));
     }
 
-   @PostMapping("{id}/{cardID}")
-    public ResponseEntity<GameEntity> playCard(@PathVariable String id, @PathVariable int cardID/*@PathVariable int playerID*/) throws JsonProcessingException {
-        gameService.playCard(1, cardID,id,1500);
-       var mapper = new ObjectMapper();
-       String lobbyTo = MessageFormat.format("/game/{0}", id);
-       messagingTemplate.convertAndSend(lobbyTo, mapper.writeValueAsString(gameService.getGame(id)));
-        return ResponseEntity.ok(gameService.getGame(id));
-    }
+//    @PostMapping("/{id}/{cardID}")
+//    public ResponseEntity<GameEntity> playCard(
+//            @PathVariable String id,
+//            @PathVariable int cardID,
+//            @AuthenticationPrincipal Jwt jwt) throws JsonProcessingException {
+//
+//        log.info("Play card request - Game: {}, Card: {}, User: {}", id, cardID, jwt.getSubject());
+//
+//        GameEntity game = gameStateService.getGame(id);
+//        gameServiceInt.playCard(1, cardID, game, 1500);
+//
+//        var mapper = new ObjectMapper();
+//        String lobbyTo = MessageFormat.format("/game/{0}", id);
+//        messagingTemplate.convertAndSend(lobbyTo, mapper.writeValueAsString(gameServiceInt.getGame(id)));
+//
+//        return ResponseEntity.ok(gameServiceInt.getGame(id));
+//    }
 
+    @PostMapping("/{id}/{cardID}")
+    public ResponseEntity<GameEntity> playCard(
+            @PathVariable String id,
+            @PathVariable int cardID,
+            @AuthenticationPrincipal Jwt jwt) throws JsonProcessingException {
+
+        log.info("Play card request - Game: {}, Card: {}, User: {}", id, cardID, jwt.getSubject());
+
+        GameEntity game = gameStateServiceInt.getGame(id);
+        gameServiceInt.playCardAsync(1, cardID, game, 1500);
+
+
+        return ResponseEntity.ok(gameServiceInt.getGame(id));
+    }
 
     @MessageMapping("/chat/{roomId}")
     @SendTo("/topic/chat/{roomId}")
-    public ResponseEntity<String> sendPlayCard(@Payload ResponseEntity<String> message, @DestinationVariable String roomId) {
-
+    public ResponseEntity<String> sendPlayCard(
+            @Payload ResponseEntity<String> message,
+            @DestinationVariable String roomId) {
         return message;
     }
 }

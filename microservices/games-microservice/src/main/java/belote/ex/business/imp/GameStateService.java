@@ -1,44 +1,52 @@
 package belote.ex.business.imp;
 
-
+import belote.ex.business.GameStateServiceInt;
 import belote.ex.persistance.entity.GameEntity;
-import lombok.RequiredArgsConstructor;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.util.Set;
-import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
-public class GameStateService {
+public class GameStateService implements GameStateServiceInt {
 
     private final RedisTemplate<String, Object> redisTemplate;
 
     private static final String GAME_PREFIX = "game:";
-    private static final String ACTIVE_GAMES = "active:games";
-    private static final Duration GAME_TTL = Duration.ofHours(6);
+    private static final Duration GAME_TTL = Duration.ofMinutes(40); //Temporary
 
-    // Create new game
-    public String createGame(GameEntity game) {
-        String gameId = UUID.randomUUID().toString();
+    public GameStateService(RedisTemplate<String, Object> redisTemplate,
+                            MeterRegistry meterRegistry) {
+        this.redisTemplate = redisTemplate;
+
+        // Register gauge that counts game:* keys directly
+        Gauge.builder("belote.games.active.count", this,
+                        service -> service.getActiveGameCount())
+                .description("Current number of active games in Redis")
+                .register(meterRegistry);
+    }
+
+    public String createGame(GameEntity game, String lobbyID) {
+        String gameId = lobbyID;
         game.setId(gameId);
         game.setStatus("WAITING");
         game.setCreatedAt(System.currentTimeMillis());
 
         saveGame(game);
 
-        // Add to active games set
-        redisTemplate.opsForSet().add(ACTIVE_GAMES, gameId);
-
         log.info("Created new game: {}", gameId);
         return gameId;
     }
 
-    // Save/Update game state
     public void saveGame(GameEntity game) {
         game.setUpdatedAt(System.currentTimeMillis());
         String key = GAME_PREFIX + game.getId();
@@ -46,7 +54,6 @@ public class GameStateService {
         log.debug("Saved game state: {}", game.getId());
     }
 
-    // Get game by ID
     public GameEntity getGame(String gameId) {
         String key = GAME_PREFIX + gameId;
         Object result = redisTemplate.opsForValue().get(key);
@@ -59,35 +66,53 @@ public class GameStateService {
         return null;
     }
 
-    // Delete game
     public void deleteGame(String gameId) {
         String key = GAME_PREFIX + gameId;
         redisTemplate.delete(key);
-        redisTemplate.opsForSet().remove(ACTIVE_GAMES, gameId);
         log.info("Deleted game: {}", gameId);
     }
 
-    // Get all active games
-    public Set<Object> getActiveGames() {
-        return redisTemplate.opsForSet().members(ACTIVE_GAMES);
+    public long getActiveGameCount() {
+        AtomicLong count = new AtomicLong(0);
+
+        redisTemplate.execute((RedisCallback<Object>) connection -> {
+            ScanOptions options = ScanOptions.scanOptions()
+                    .match(GAME_PREFIX + "*")
+                    .count(100)
+                    .build();
+
+            Cursor<byte[]> cursor = connection.scan(options);
+            while (cursor.hasNext()) {
+                cursor.next();
+                count.incrementAndGet();
+            }
+            cursor.close();
+            return null;
+        });
+
+        return count.get();
     }
 
-    // Check if game exists
+
+    public Set<String> getActiveGameIds() {
+        return redisTemplate.keys(GAME_PREFIX + "*");
+    }
+
     public boolean gameExists(String gameId) {
         String key = GAME_PREFIX + gameId;
         return Boolean.TRUE.equals(redisTemplate.hasKey(key));
     }
 
-    // Update game status
     public void updateGameStatus(String gameId, String status) {
         GameEntity game = getGame(gameId);
         if (game != null) {
             game.setStatus(status);
-            saveGame(game);
 
             if ("FINISHED".equals(status) || "ABANDONED".equals(status)) {
-                // Remove from active games
-                redisTemplate.opsForSet().remove(ACTIVE_GAMES, gameId);
+                deleteGame(gameId);
+                log.info("Game finished/abandoned and removed: {}", gameId);
+            } else {
+                saveGame(game);
             }
         }
     }
@@ -96,5 +121,6 @@ public class GameStateService {
     public void extendGameTTL(String gameId) {
         String key = GAME_PREFIX + gameId;
         redisTemplate.expire(key, GAME_TTL);
+        log.debug("Extended TTL for game: {}", gameId);
     }
 }

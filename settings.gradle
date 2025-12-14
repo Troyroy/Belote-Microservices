@@ -6,5 +6,5 @@ include 'microservices:lobby-microservice'
 
 include 'shared:common-events'
 include 'shared:common-models'
-
+include 'apigateway'
 

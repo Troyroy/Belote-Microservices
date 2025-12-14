@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: microservices
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+
+    scrape_configs:
+      # Prometheus itself
+      - job_name: 'prometheus'
+        static_configs:
+          - targets: ['localhost:9090']
+
+      # API Gateway
+      - job_name: 'api-gateway'
+        metrics_path: '/actuator/prometheus'
+        static_configs:
+          - targets: ['api-gateway:8080']
+
+      # Users Microservice
+      - job_name: 'users-microservice'
+        metrics_path: '/actuator/prometheus'
+        static_configs:
+          - targets: ['users-microservice:8080']
+
+      # Games Microservice
+      - job_name: 'games-microservice'
+        metrics_path: '/actuator/prometheus'
+        static_configs:
+          - targets: ['games-microservice:8080']
+
+      # Lobby Microservice
+      - job_name: 'lobby-microservice'
+        metrics_path: '/actuator/prometheus'
+        static_configs:
+          - targets: ['lobby-microservice:8080']
+
+      # Kubernetes pods (auto-discovery)
+      - job_name: 'kubernetes-pods'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - microservices
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__

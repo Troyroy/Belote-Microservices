@@ -23,6 +23,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import static java.lang.System.*;
+
 @Service
 public class AccessTokenEncoderDecoderImpl implements AccessTokenEncoder, AccessTokenDecoder {
     private final Key key;
@@ -55,6 +57,7 @@ public class AccessTokenEncoderDecoderImpl implements AccessTokenEncoder, Access
     @Override
     public AccessToken decode(String accessTokenEncoded) {
         try {
+
             Jwt<?, Claims> jwt = Jwts.parserBuilder().setSigningKey(key).build()
                     .parseClaimsJws(accessTokenEncoded);
             Claims claims = jwt.getBody();

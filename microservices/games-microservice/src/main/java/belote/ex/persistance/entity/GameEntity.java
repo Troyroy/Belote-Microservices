@@ -34,7 +34,7 @@ public class GameEntity implements Serializable {
     private Map<Integer, List<CardEntity>> hands;
 
     // Game metadata
-    private String status;  // WAITING, IN_PROGRESS, FINISHED
+    private String status;
     private Long createdAt;
     private Long updatedAt;
 }

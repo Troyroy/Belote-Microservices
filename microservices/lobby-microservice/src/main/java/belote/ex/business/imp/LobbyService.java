@@ -2,6 +2,7 @@ package belote.ex.business.imp;
 
 
 import belote.ex.business.LobbyServiceInt;
+import belote.ex.config.LobbyRabbitMQConfig;
 import belote.ex.events.LobbyReadyEvent;
 import belote.ex.persistance.entity.LobbyEntity;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,9 @@ import java.util.List;
 @AllArgsConstructor
 public class LobbyService implements LobbyServiceInt {
 
+
+
+    private RabbitTemplate rabbitTemplate;
     private final LobbyStateService lobbyStateService;
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
@@ -87,7 +92,6 @@ public class LobbyService implements LobbyServiceInt {
         LobbyReadyEvent event = new LobbyReadyEvent(
                 lobbyId,
                 lobby.getPlayerIds()
-                //System.currentTimeMillis()
         );
 
         // Publish event to Redis for game service
@@ -99,6 +103,17 @@ public class LobbyService implements LobbyServiceInt {
             log.error("Error publishing lobby ready event", e);
             throw new RuntimeException("Failed to start game", e);
         }
+
+        rabbitTemplate.convertAndSend(
+                LobbyRabbitMQConfig.GAME_EXCHANGE,
+                LobbyRabbitMQConfig.START_GAME_ROUTING_KEY,
+                event
+        );
+
+        System.out.println("Game start event published for lobby: " + lobby.getId());
+
+        notifyGameReady(lobbyId,lobbyId,lobby);
+        lobbyStateService.deleteLobby(lobbyId);
     }
 
 

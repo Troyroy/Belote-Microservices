@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS games (
+    id VARCHAR(36) PRIMARY KEY,
+    player1 BIGINT NULL,
+    player2 BIGINT NULL,
+    player3 BIGINT NULL,
+    player4 BIGINT NULL,
+    team1Score INT NOT NULL DEFAULT 0,
+    team2Score INT NOT NULL DEFAULT 0,
+    winner_team INT NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

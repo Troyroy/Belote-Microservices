@@ -3,35 +3,25 @@ plugins {
 }
 
 dependencies {
-    // Depend on shared modules
-    implementation project(':shared:common-events')
     implementation project(':shared:common-models')
-
-    // Spring Boot dependencies
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-validation'
-
+    implementation project(':shared:common-events')
+    // If you want Redis cache support
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'redis.clients:jedis:5.1.0'
+    implementation 'org.springframework.boot:spring-boot-starter-amqp'
+    implementation 'org.flywaydb:flyway-mysql'
+    implementation 'mysql:mysql-connector-java:8.0.33'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
 
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
-    // Redis
-    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-    implementation 'redis.clients:jedis:5.1.0'
-    implementation 'org.springframework.boot:spring-boot-starter-cache'
 
-    // WebSocket
-    implementation 'org.springframework.boot:spring-boot-starter-websocket'
-
-    // JSON
-    implementation 'com.fasterxml.jackson.core:jackson-databind'
-
-    compileOnly 'org.projectlombok:lombok'
-    annotationProcessor 'org.projectlombok:lombok'
-
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testRuntimeOnly 'com.h2database:h2'
+    testImplementation 'org.springframework.security:spring-security-test'
 }
 
 sonarqube {

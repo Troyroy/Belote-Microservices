@@ -23,7 +23,7 @@ const BASE_URL = 'http://localhost:8083';
 export function setup() {
     // Get auth token
     const loginPayload = JSON.stringify({
-        email: 'georgievtroantest@gmail.com',
+        username: 'Troyroy',
         password: '310803gg',
     });
 

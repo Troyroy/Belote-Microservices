@@ -1,27 +1,41 @@
 package belote.ex.business.imp;
 
-
 import belote.ex.persistance.entity.LobbyEntity;
-import lombok.RequiredArgsConstructor;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class LobbyStateService {
 
     private final RedisTemplate<String, Object> redisTemplate;
 
     private static final String LOBBY_PREFIX = "lobby:";
-    private static final String ACTIVE_LOBBIES = "active:lobbies";
     private static final Duration LOBBY_TTL = Duration.ofHours(2);
+
+    public LobbyStateService(RedisTemplate<String, Object> redisTemplate,
+                             MeterRegistry meterRegistry) {
+        this.redisTemplate = redisTemplate;
+
+        // Register gauge that counts lobby:* keys directly
+        Gauge.builder("belote.lobbies.active.count", this,
+                        service -> service.getActiveLobbyCount())
+                .description("Current number of active lobbies in Redis")
+                .register(meterRegistry);
+    }
 
     /**
      * Create new lobby
@@ -32,9 +46,6 @@ public class LobbyStateService {
         lobby.setCreatedAt(System.currentTimeMillis());
 
         saveLobby(lobby);
-
-        // Add to active lobbies set
-        redisTemplate.opsForSet().add(ACTIVE_LOBBIES, lobbyId);
 
         log.info("Created new lobby: {}", lobbyId);
         return lobbyId;
@@ -71,24 +82,72 @@ public class LobbyStateService {
     public void deleteLobby(String lobbyId) {
         String key = LOBBY_PREFIX + lobbyId;
         redisTemplate.delete(key);
-        redisTemplate.opsForSet().remove(ACTIVE_LOBBIES, lobbyId);
         log.info("Deleted lobby: {}", lobbyId);
+    }
+
+    /**
+     * Get active lobby count - counts all lobby:* keys using SCAN
+     */
+    public long getActiveLobbyCount() {
+        AtomicLong count = new AtomicLong(0);
+
+        redisTemplate.execute((RedisCallback<Object>) connection -> {
+            ScanOptions options = ScanOptions.scanOptions()
+                    .match(LOBBY_PREFIX + "*")
+                    .count(100)
+                    .build();
+
+            Cursor<byte[]> cursor = connection.scan(options);
+            while (cursor.hasNext()) {
+                cursor.next();
+                count.incrementAndGet();
+            }
+            cursor.close();
+            return null;
+        });
+
+        return count.get();
     }
 
     /**
      * Get all active lobbies
      */
     public Set<LobbyEntity> getActiveLobbies() {
-        Set<Object> lobbyIds = redisTemplate.opsForSet().members(ACTIVE_LOBBIES);
+        Set<String> lobbyIds = getActiveLobbyIds();
 
         if (lobbyIds == null || lobbyIds.isEmpty()) {
             return Set.of();
         }
 
         return lobbyIds.stream()
-                .map(id -> getLobby(id.toString()))
+                .map(this::getLobby)
                 .filter(lobby -> lobby != null)
                 .collect(Collectors.toSet());
+    }
+
+    /**
+     * Get all active lobby IDs using SCAN
+     */
+    public Set<String> getActiveLobbyIds() {
+        Set<String> lobbyIds = new HashSet<>();
+
+        redisTemplate.execute((RedisCallback<Object>) connection -> {
+            ScanOptions options = ScanOptions.scanOptions()
+                    .match(LOBBY_PREFIX + "*")
+                    .count(100)
+                    .build();
+
+            Cursor<byte[]> cursor = connection.scan(options);
+            while (cursor.hasNext()) {
+                String key = new String(cursor.next());
+                String lobbyId = key.replace(LOBBY_PREFIX, "");
+                lobbyIds.add(lobbyId);
+            }
+            cursor.close();
+            return null;
+        });
+
+        return lobbyIds;
     }
 
     /**
@@ -98,7 +157,6 @@ public class LobbyStateService {
         String key = LOBBY_PREFIX + lobbyId;
         return Boolean.TRUE.equals(redisTemplate.hasKey(key));
     }
-
 
     /**
      * Add player to lobby
@@ -111,11 +169,10 @@ public class LobbyStateService {
             return false;
         }
 
-        if (lobby.isFull()) {
+        if (lobby.getPlayerIds().size() == 4) {
             log.warn("Lobby {} is full", lobbyId);
             return false;
         }
-
 
         lobby.addPlayer(playerId);
         saveLobby(lobby);

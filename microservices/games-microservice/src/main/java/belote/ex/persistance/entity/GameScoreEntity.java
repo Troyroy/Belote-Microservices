@@ -22,16 +22,16 @@ public class GameScoreEntity {
     private String id;
 
     @Column(name="player1")
-    private int player1;
+    private Integer player1;
 
     @Column(name="player2")
-    private int player2;
+    private Integer player2;
 
     @Column(name="player3")
-    private int player3;
+    private Integer player3;
 
     @Column(name="player4")
-    private int player4;
+    private Integer player4;
 
     @NotNull
     @Column(name = "team1Score")
@@ -42,16 +42,7 @@ public class GameScoreEntity {
     private int team2Score;
 
     @NotNull
-    @Column(name = "winner")
+    @Column(name = "winner_team")
     private int winnerTeam;
 
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
-        }
-    }
 }
