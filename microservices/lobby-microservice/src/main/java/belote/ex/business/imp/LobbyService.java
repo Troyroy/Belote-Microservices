@@ -33,9 +33,6 @@ public class LobbyService implements LobbyServiceInt {
     private static final Logger log = LoggerFactory.getLogger(LobbyService.class);
     private static final String LOBBY_EVENTS_CHANNEL = "lobby:events";
 
-    /**
-     * Create a new lobby
-     */
     public String createLobby(String lobbyName, String hostId, String gameMode) {
         LobbyEntity lobby = new LobbyEntity(null, hostId);
         lobby.addPlayer(Integer.parseInt(hostId)); // Host joins automatically
@@ -46,9 +43,6 @@ public class LobbyService implements LobbyServiceInt {
         return lobbyId;
     }
 
-    /**
-     * Join an existing lobby
-     */
     public boolean joinLobby(String lobbyId, Integer playerId) {
         boolean success = lobbyStateService.addPlayer(lobbyId, playerId);
 
@@ -61,9 +55,6 @@ public class LobbyService implements LobbyServiceInt {
         return success;
     }
 
-    /**
-     * Leave a lobby
-     */
     public boolean leaveLobby(String lobbyId, Integer playerId) {
         boolean success = lobbyStateService.removePlayer(lobbyId, playerId);
 
@@ -77,9 +68,6 @@ public class LobbyService implements LobbyServiceInt {
         return success;
     }
 
-    /**
-     * Start the game from lobby
-     */
     public void startGame(String lobbyId) {
         LobbyEntity lobby = lobbyStateService.getLobby(lobbyId);
 
@@ -87,14 +75,11 @@ public class LobbyService implements LobbyServiceInt {
             throw new IllegalArgumentException("Lobby not found: " + lobbyId);
         }
 
-
-        // Create and publish event
         LobbyReadyEvent event = new LobbyReadyEvent(
                 lobbyId,
                 lobby.getPlayerIds()
         );
 
-        // Publish event to Redis for game service
         try {
             String eventJson = objectMapper.writeValueAsString(event);
             redisTemplate.convertAndSend(LOBBY_EVENTS_CHANNEL, eventJson);
@@ -116,25 +101,14 @@ public class LobbyService implements LobbyServiceInt {
         lobbyStateService.deleteLobby(lobbyId);
     }
 
-
-
-    /**
-     * Get lobby details
-     */
     public LobbyEntity getLobby(String lobbyId) {
         return lobbyStateService.getLobby(lobbyId);
     }
 
-    /**
-     * Get all active lobbies
-     */
     public List<LobbyEntity> getActiveLobbies() {
         return lobbyStateService.getActiveLobbies().stream().toList();
     }
 
-    /**
-     * Notify lobby members of updates via WebSocket
-     */
     private void notifyLobbyUpdate(String lobbyId, LobbyEntity lobby) {
         messagingTemplate.convertAndSend(
                 "/topic/lobby/" + lobbyId,
@@ -142,9 +116,6 @@ public class LobbyService implements LobbyServiceInt {
         );
     }
 
-    /**
-     * Notify lobby members that game is ready
-     */
     private void notifyGameReady(String lobbyId, String gameId, LobbyEntity lobby) {
         messagingTemplate.convertAndSend(
                 "/topic/lobby/" + lobbyId,
