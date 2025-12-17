@@ -17,6 +17,6 @@ public interface GameStateServiceInt {
     public boolean gameExists(String gameId);
 
     public void updateGameStatus(String gameId, String status) ;
-    
+
     public void extendGameTTL(String gameId);
 }
