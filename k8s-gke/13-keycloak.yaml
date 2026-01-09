@@ -75,7 +75,7 @@ spec:
               mountPath: /opt/keycloak/data
           resources:
             requests:
-              memory: "256Mi"
+              memory: "128Mi"
               cpu: "100m"
             limits:
               memory: "512Mi"
