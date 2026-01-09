@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: games-microservice
-          image: gcr.io/celtic-beacon-480316-e5/games-microservice:v1.0.0
+          image: troyroy/belote_games_microservice:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8080

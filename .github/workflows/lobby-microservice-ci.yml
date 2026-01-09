@@ -82,4 +82,6 @@ jobs:
           context: .
           file: ./microservices/lobby-microservice/Dockerfile
           push: true
-          tags: troyroy/belote_lobby_microservice:latest
+          tags: |
+            troyroy/belote_lobby_microservice:${{ github.sha }}
+            troyroy/belote_lobby_microservice:latest

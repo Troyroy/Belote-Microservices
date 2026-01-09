@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: belote-microservices
+  namespace: argocd
+  annotations:
+    # Watch all three Docker Hub images
+    argocd-image-updater.argoproj.io/image-list: |
+      games=troyroy/belote_games_microservice,
+      users=troyroy/belote_users_microservice,
+      lobby=troyroy/belote_lobby_microservice
+
+    # Configure games microservice
+    argocd-image-updater.argoproj.io/games.allow-tags: regexp:^[0-9a-f]{7,40}$
+    argocd-image-updater.argoproj.io/games.update-strategy: latest
+
+    # Configure users microservice
+    argocd-image-updater.argoproj.io/users.allow-tags: regexp:^[0-9a-f]{7,40}$
+    argocd-image-updater.argoproj.io/users.update-strategy: latest
+
+    # Configure lobby microservice
+    argocd-image-updater.argoproj.io/lobby.allow-tags: regexp:^[0-9a-f]{7,40}$
+    argocd-image-updater.argoproj.io/lobby.update-strategy: latest
+
+    argocd-image-updater.argoproj.io/write-back-method: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Troyroy/Belote-Microservices  # Replace with your actual repo
+    targetRevision: main
+    path: k8s-gke  # Your folder name
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: microservices
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

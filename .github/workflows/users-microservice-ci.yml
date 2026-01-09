@@ -82,4 +82,6 @@ jobs:
           context: .
           file: ./microservices/users-microservice/Dockerfile
           push: true
-          tags: troyroy/belote_users_microservice:latest
+          tags: |
+            troyroy/belote_users_microservice:${{ github.sha }}
+            troyroy/belote_users_microservice:latest
